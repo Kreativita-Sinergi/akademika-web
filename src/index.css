@@ -1,0 +1,13 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary-50: #eef4ff;
+  --color-primary-100: #dde7ff;
+  --color-primary-500: #4263eb;
+  --color-primary-600: #3b5bdb;
+  --color-primary-700: #364fc7;
+}
+
+body {
+  @apply bg-slate-50 text-slate-800 antialiased;
+}
