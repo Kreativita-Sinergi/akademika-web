@@ -5,12 +5,13 @@ import ResourcePage from '../components/crud/ResourcePage';
 import { useOptions } from '../hooks/useList';
 import { createResource, errorMessage, getResource } from '../api/crud';
 import { Badge, Button, Field, Modal, inputClass } from '../components/ui';
-import type { AcademicYear, ClassGroup, Student, StudentSemester, StudyProgram, UktGroup } from '../types';
+import type { AcademicYear, ClassGroup, Lecturer, Student, StudentSemester, StudyProgram, UktGroup } from '../types';
 
 export default function StudentsPage() {
   const programs = useOptions<StudyProgram>('/master/programs', (p) => p.name);
   const classGroups = useOptions<ClassGroup>('/master/class-groups', (g) => g.code);
   const uktGroups = useOptions<UktGroup>('/ukt/groups', (u) => `Gol ${u.group_number} — ${u.study_program?.name ?? ''}`);
+  const lecturers = useOptions<Lecturer>('/lecturers', (l) => l.name);
   const years = useOptions<AcademicYear>('/master/academic-years', (y) => `${y.name} ${y.semester}`);
 
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -75,6 +76,7 @@ export default function StudentsPage() {
           { name: 'entry_year', label: 'Tahun Angkatan', type: 'number', required: true },
           { name: 'photo_url', label: 'Foto Mahasiswa', type: 'file', folder: 'students' },
           { name: 'ukt_group_id', label: 'Golongan UKT', type: 'select', options: uktGroups },
+          { name: 'advisor_lecturer_id', label: 'Dosen Wali (PA)', type: 'select', options: lecturers },
           { name: 'create_account', label: 'Buatkan akun login mahasiswa', type: 'checkbox' },
           { name: 'password', label: 'Password akun (min 8 karakter)', type: 'password' },
         ]}
@@ -89,6 +91,7 @@ export default function StudentsPage() {
           entry_year: s.entry_year,
           photo_url: (s as unknown as { photo_url?: string }).photo_url ?? '',
           ukt_group_id: s.ukt_group_id ?? '',
+          advisor_lecturer_id: s.advisor_lecturer_id ?? '',
           create_account: false,
           password: '',
         })}
@@ -96,6 +99,7 @@ export default function StudentsPage() {
           ...form,
           class_group_id: form.class_group_id || null,
           ukt_group_id: form.ukt_group_id || null,
+          advisor_lecturer_id: form.advisor_lecturer_id || null,
         })}
         rowActions={(student) => (
           <button

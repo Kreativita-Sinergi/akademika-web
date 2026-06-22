@@ -107,10 +107,12 @@ export interface Student {
   entry_year: number;
   current_semester: number;
   ukt_group_id: string | null;
+  advisor_lecturer_id: string | null;
   status: string;
   study_program?: StudyProgram;
   class_group?: ClassGroup;
   ukt_group?: UktGroup;
+  advisor?: Lecturer;
 }
 
 export interface StudentSemester {
@@ -301,6 +303,179 @@ export interface Alumni {
   student?: Student;
 }
 
+export interface Announcement {
+  id: string;
+  title: string;
+  body: string;
+  audience: string; // all/lecturer/student
+  is_pinned: boolean;
+  is_published: boolean;
+  author_name: string;
+  created_at: string;
+}
+
+export interface Guidance {
+  id: string;
+  student_id: string;
+  lecturer_id: string;
+  date: string;
+  type: string; // akademik/konseling/lainnya
+  topic: string;
+  note: string;
+  follow_up: string;
+  student?: Student;
+  lecturer?: Lecturer;
+}
+
+export interface LetterRequest {
+  id: string;
+  student_id: string;
+  type: string; // aktif_kuliah/cuti/lulus/keterangan
+  purpose: string;
+  status: string; // diajukan/disetujui/ditolak
+  letter_number: string;
+  note: string;
+  approved_at: string | null;
+  created_at: string;
+  student?: Student;
+}
+
+export interface CourseMaterial {
+  id: string;
+  schedule_id: string;
+  title: string;
+  description: string;
+  file_url: string;
+  link_url: string;
+  created_at: string;
+  schedule?: Schedule;
+}
+
+export interface Assignment {
+  id: string;
+  schedule_id: string;
+  title: string;
+  description: string;
+  file_url: string;
+  due_date: string | null;
+  created_at: string;
+  schedule?: Schedule;
+}
+
+export interface AssignmentSubmission {
+  id: string;
+  assignment_id: string;
+  student_id: string;
+  file_url: string;
+  link_url: string;
+  note: string;
+  score: number | null;
+  feedback: string;
+  submitted_at: string;
+  graded_at: string | null;
+  assignment?: Assignment;
+  student?: Student;
+}
+
+export interface CourseExam {
+  id: string;
+  academic_year_id: string;
+  schedule_id: string;
+  exam_type: string; // uts/uas
+  date: string;
+  start_time: string;
+  end_time: string;
+  room_id: string | null;
+  proctor_name: string;
+  note: string;
+  schedule?: Schedule;
+  academic_year?: AcademicYear;
+  room?: Room;
+}
+
+export interface EvaluationQuestion {
+  id: string;
+  text: string;
+  order_no: number;
+  is_active: boolean;
+}
+
+export interface EvaluationPeriod {
+  id: string;
+  academic_year_id: string;
+  name: string;
+  is_open: boolean;
+  academic_year?: AcademicYear;
+}
+
+export interface LecturerEvalRecap {
+  lecturer_id: string;
+  lecturer_name: string;
+  respondents: number;
+  average_score: number;
+}
+
+export interface KrsItem {
+  id: string;
+  krs_plan_id: string;
+  course_id: string;
+  schedule_id: string | null;
+  sks: number;
+  course?: Course;
+  schedule?: Schedule;
+}
+
+export interface KrsPlan {
+  id: string;
+  student_id: string;
+  academic_year_id: string;
+  semester_number: number;
+  status: string; // draft/diajukan/disetujui/ditolak
+  total_sks: number;
+  advisor_note: string;
+  submitted_at: string | null;
+  approved_at: string | null;
+  student?: Student;
+  academic_year?: AcademicYear;
+  items?: KrsItem[];
+}
+
+export interface Yudisium {
+  id: string;
+  student_id: string;
+  academic_year_id: string;
+  number: string;
+  decree_number: string;
+  date: string;
+  ipk: number;
+  total_sks: number;
+  predicate: string;
+  status: string; // diajukan/disahkan
+  note: string;
+  student?: Student;
+  academic_year?: AcademicYear;
+}
+
+export interface SkpiActivity {
+  id: string;
+  skpi_id: string;
+  category: string;
+  title: string;
+  organizer: string;
+  year: number;
+  level: string;
+  description: string;
+}
+
+export interface Skpi {
+  id: string;
+  student_id: string;
+  number: string;
+  issued_date: string;
+  student?: Student;
+  activities?: SkpiActivity[];
+}
+
 export interface DashboardSummary {
   total_students: number;
   active_students: number;
@@ -311,4 +486,85 @@ export interface DashboardSummary {
   unpaid_invoices: number;
   today_schedules: number;
   students_by_status: Record<string, number>;
+}
+
+// ── Kalender Akademik ────────────────────────────────────────────────────────
+export interface AcademicEvent {
+  id: string;
+  campus_id: string;
+  academic_year_id?: string | null;
+  title: string;
+  description: string;
+  category: string;
+  start_date: string;
+  end_date: string;
+  is_holiday: boolean;
+  academic_year?: AcademicYear | null;
+}
+
+// ── Perpustakaan ─────────────────────────────────────────────────────────────
+export interface Book {
+  id: string;
+  campus_id: string;
+  title: string;
+  author: string;
+  publisher: string;
+  year: number;
+  isbn: string;
+  category: string;
+  shelf_location: string;
+  cover_url: string;
+  total_copies: number;
+  available_copies: number;
+}
+
+export interface BookLoan {
+  id: string;
+  campus_id: string;
+  book_id: string;
+  borrower_type: string;
+  student_id?: string | null;
+  lecturer_id?: string | null;
+  borrower_name: string;
+  loan_date: string;
+  due_date: string;
+  return_date?: string | null;
+  status: string;
+  fine: number;
+  note: string;
+  book?: Book | null;
+}
+
+// ── Beasiswa ─────────────────────────────────────────────────────────────────
+export interface Scholarship {
+  id: string;
+  campus_id: string;
+  academic_year_id?: string | null;
+  name: string;
+  provider: string;
+  description: string;
+  requirements: string;
+  quota: number;
+  amount_per_student: number;
+  min_gpa: number;
+  open_date: string;
+  close_date: string;
+  is_active: boolean;
+  academic_year?: AcademicYear | null;
+}
+
+export interface ScholarshipApplication {
+  id: string;
+  campus_id: string;
+  scholarship_id: string;
+  student_id: string;
+  student_name: string;
+  gpa: number;
+  reason: string;
+  document_url: string;
+  status: string;
+  review_note: string;
+  decided_at?: string | null;
+  scholarship?: Scholarship | null;
+  student?: Student | null;
 }

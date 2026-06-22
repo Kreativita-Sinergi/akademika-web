@@ -75,6 +75,7 @@ export function ExamSchedulesPage() {
         { name: 'end_time', label: 'Jam Selesai (HH:MM)', type: 'time' },
         { name: 'room_id', label: 'Ruangan', type: 'select', options: rooms },
         { name: 'capacity', label: 'Kapasitas', type: 'number' },
+        { name: 'duration_minutes', label: 'Durasi CBT (menit)', type: 'number' },
       ]}
       toForm={(e) => ({
         admission_wave_id: e.admission_wave_id,
@@ -84,6 +85,7 @@ export function ExamSchedulesPage() {
         end_time: e.end_time,
         room_id: e.room_id ?? '',
         capacity: e.capacity,
+        duration_minutes: (e as unknown as { duration_minutes?: number }).duration_minutes ?? 60,
       })}
       toPayload={(form) => ({
         ...form,

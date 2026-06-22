@@ -15,6 +15,15 @@ import {
   Briefcase,
   Award,
   Contact,
+  Megaphone,
+  Mail,
+  NotebookPen,
+  Library,
+  CalendarCheck,
+  ClipboardCheck,
+  Star,
+  BadgeCheck,
+  FileText,
 } from 'lucide-react';
 import { useAuthStore } from '../../store/auth';
 import type { ReactNode } from 'react';
@@ -28,7 +37,12 @@ interface MenuItem {
 const adminMenu: { section: string; items: MenuItem[] }[] = [
   {
     section: 'Utama',
-    items: [{ to: '/', label: 'Dashboard', icon: <Home size={17} /> }],
+    items: [
+      { to: '/', label: 'Dashboard', icon: <Home size={17} /> },
+      { to: '/announcements', label: 'Pengumuman', icon: <Megaphone size={17} /> },
+      { to: '/reports', label: 'Laporan', icon: <ScrollText size={17} /> },
+      { to: '/audit-logs', label: 'Audit Log', icon: <ClipboardList size={17} /> },
+    ],
   },
   {
     section: 'Master',
@@ -47,6 +61,8 @@ const adminMenu: { section: string; items: MenuItem[] }[] = [
       { to: '/admission/waves', label: 'Gelombang', icon: <ClipboardList size={17} /> },
       { to: '/admission/exams', label: 'Jadwal Ujian', icon: <CalendarDays size={17} /> },
       { to: '/admission/applicants', label: 'Pendaftar', icon: <UserSquare2 size={17} /> },
+      { to: '/admission/questions', label: 'Bank Soal CBT', icon: <BookOpen size={17} /> },
+      { to: '/admission/attempts', label: 'Hasil CBT', icon: <ClipboardList size={17} /> },
     ],
   },
   {
@@ -55,7 +71,36 @@ const adminMenu: { section: string; items: MenuItem[] }[] = [
       { to: '/lecturers', label: 'Dosen', icon: <Contact size={17} /> },
       { to: '/students', label: 'Mahasiswa', icon: <Users size={17} /> },
       { to: '/schedules', label: 'Jadwal Kuliah', icon: <CalendarDays size={17} /> },
+      { to: '/attendance', label: 'Presensi', icon: <ClipboardList size={17} /> },
       { to: '/grades', label: 'Nilai', icon: <ScrollText size={17} /> },
+      { to: '/guidances', label: 'Bimbingan (PA)', icon: <NotebookPen size={17} /> },
+      { to: '/krs', label: 'Persetujuan KRS', icon: <ClipboardCheck size={17} /> },
+      { to: '/exam-events', label: 'Jadwal Ujian', icon: <CalendarCheck size={17} /> },
+      { to: '/elearning/materials', label: 'Materi Kuliah', icon: <Library size={17} /> },
+      { to: '/elearning/assignments', label: 'Tugas', icon: <ClipboardList size={17} /> },
+      { to: '/letters', label: 'Surat Akademik', icon: <Mail size={17} /> },
+      { to: '/academic-calendar', label: 'Kalender Akademik', icon: <CalendarDays size={17} /> },
+    ],
+  },
+  {
+    section: 'Perpustakaan',
+    items: [
+      { to: '/library/books', label: 'Katalog Buku', icon: <BookOpen size={17} /> },
+      { to: '/library/loans', label: 'Sirkulasi', icon: <Library size={17} /> },
+    ],
+  },
+  {
+    section: 'Beasiswa',
+    items: [
+      { to: '/scholarships', label: 'Program Beasiswa', icon: <Award size={17} /> },
+      { to: '/scholarships/applications', label: 'Seleksi', icon: <BadgeCheck size={17} /> },
+    ],
+  },
+  {
+    section: 'EDOM',
+    items: [
+      { to: '/evaluation/periods', label: 'Periode EDOM', icon: <Star size={17} /> },
+      { to: '/evaluation/questions', label: 'Pertanyaan EDOM', icon: <NotebookPen size={17} /> },
     ],
   },
   {
@@ -70,6 +115,8 @@ const adminMenu: { section: string; items: MenuItem[] }[] = [
     items: [
       { to: '/internships', label: 'PKL / KP', icon: <Briefcase size={17} /> },
       { to: '/theses', label: 'Tugas Akhir', icon: <ScrollText size={17} /> },
+      { to: '/yudisium', label: 'Yudisium', icon: <BadgeCheck size={17} /> },
+      { to: '/skpi', label: 'SKPI', icon: <FileText size={17} /> },
       { to: '/graduations', label: 'Wisuda', icon: <Award size={17} /> },
       { to: '/alumni', label: 'Alumni', icon: <GraduationCap size={17} /> },
     ],
@@ -80,11 +127,19 @@ const lecturerMenu: { section: string; items: MenuItem[] }[] = [
   {
     section: 'Dosen',
     items: [
+      { to: '/feed', label: 'Pengumuman', icon: <Megaphone size={17} /> },
       { to: '/my-schedule', label: 'Jadwal Mengajar', icon: <CalendarDays size={17} /> },
+      { to: '/attendance', label: 'Presensi', icon: <ClipboardList size={17} /> },
       { to: '/grades', label: 'Input Nilai', icon: <ScrollText size={17} /> },
+      { to: '/elearning/materials', label: 'Materi Kuliah', icon: <Library size={17} /> },
+      { to: '/elearning/assignments', label: 'Tugas', icon: <ClipboardList size={17} /> },
       { to: '/students', label: 'Mahasiswa', icon: <Users size={17} /> },
+      { to: '/guidances', label: 'Bimbingan Wali (PA)', icon: <NotebookPen size={17} /> },
+      { to: '/krs', label: 'Persetujuan KRS', icon: <ClipboardCheck size={17} /> },
       { to: '/theses', label: 'Bimbingan TA', icon: <ScrollText size={17} /> },
       { to: '/internships', label: 'Bimbingan PKL/KP', icon: <Briefcase size={17} /> },
+      { to: '/calendar', label: 'Kalender Akademik', icon: <CalendarDays size={17} /> },
+      { to: '/my-library', label: 'Perpustakaan', icon: <Library size={17} /> },
     ],
   },
 ];
@@ -93,8 +148,17 @@ const studentMenu: { section: string; items: MenuItem[] }[] = [
   {
     section: 'Mahasiswa',
     items: [
+      { to: '/feed', label: 'Pengumuman', icon: <Megaphone size={17} /> },
       { to: '/my-schedule', label: 'Jadwal Kuliah', icon: <CalendarDays size={17} /> },
+      { to: '/my-krs', label: 'KRS', icon: <ClipboardCheck size={17} /> },
       { to: '/my-khs', label: 'KHS & Transkrip', icon: <ScrollText size={17} /> },
+      { to: '/my-exam-card', label: 'Kartu Ujian', icon: <CalendarCheck size={17} /> },
+      { to: '/my-elearning', label: 'E-Learning', icon: <Library size={17} /> },
+      { to: '/my-evaluation', label: 'Evaluasi Dosen', icon: <Star size={17} /> },
+      { to: '/my-letters', label: 'Surat Akademik', icon: <Mail size={17} /> },
+      { to: '/my-library', label: 'Perpustakaan', icon: <Library size={17} /> },
+      { to: '/my-scholarship', label: 'Beasiswa', icon: <Award size={17} /> },
+      { to: '/calendar', label: 'Kalender Akademik', icon: <CalendarDays size={17} /> },
     ],
   },
 ];

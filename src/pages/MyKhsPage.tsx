@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
+import { Download } from 'lucide-react';
 import api from '../lib/axios';
 import { useOptions } from '../hooks/useList';
-import { Field, inputClass } from '../components/ui';
+import { downloadFile } from '../api/download';
+import { Button, Field, inputClass } from '../components/ui';
 import type { AcademicYear, ApiResponse, Khs, Transcript } from '../types';
 
 // KHS per semester + transkrip lengkap untuk mahasiswa yang login.
@@ -31,7 +33,17 @@ export default function MyKhsPage() {
 
   return (
     <div>
-      <h1 className="mb-4 text-xl font-semibold">KHS & Transkrip</h1>
+      <div className="mb-4 flex items-center justify-between">
+        <h1 className="text-xl font-semibold">KHS & Transkrip</h1>
+        <Button
+          variant="secondary"
+          onClick={() => void downloadFile('/grades/my-transcript/pdf', 'transkrip.pdf')}
+        >
+          <span className="flex items-center gap-1.5">
+            <Download size={15} /> Unduh Transkrip (PDF)
+          </span>
+        </Button>
+      </div>
 
       <div className="mb-6 grid gap-4 sm:grid-cols-3">
         <div className="rounded-xl border border-slate-200 bg-white p-4">
@@ -65,8 +77,18 @@ export default function MyKhsPage() {
             <h2 className="font-semibold">
               KHS {khs.academic_year} {khs.semester} (Semester {khs.semester_number})
             </h2>
-            <div className="text-sm">
-              IPS: <span className="font-bold text-primary-600">{khs.ips.toFixed(2)}</span>
+            <div className="flex items-center gap-3 text-sm">
+              <span>
+                IPS: <span className="font-bold text-primary-600">{khs.ips.toFixed(2)}</span>
+              </span>
+              <Button
+                variant="secondary"
+                onClick={() => void downloadFile('/grades/my-khs/pdf', `khs-smt${khs.semester_number}.pdf`, { academic_year_id: yearId })}
+              >
+                <span className="flex items-center gap-1.5">
+                  <Download size={14} /> PDF
+                </span>
+              </Button>
             </div>
           </div>
           <KhsTable items={khs.items} />
