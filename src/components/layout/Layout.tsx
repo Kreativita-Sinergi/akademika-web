@@ -1,4 +1,5 @@
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { Layout as AntLayout, Menu, Avatar, Dropdown } from 'antd';
 import {
   Banknote,
   BookOpen,
@@ -24,8 +25,15 @@ import {
   Star,
   BadgeCheck,
   FileText,
+  LifeBuoy,
+  PauseCircle,
+  Trophy,
+  Activity,
+  BookCheck,
+  MapPin,
 } from 'lucide-react';
 import { useAuthStore } from '../../store/auth';
+import NotificationBell from './NotificationBell';
 import type { ReactNode } from 'react';
 
 interface MenuItem {
@@ -72,6 +80,9 @@ const adminMenu: { section: string; items: MenuItem[] }[] = [
       { to: '/students', label: 'Mahasiswa', icon: <Users size={17} /> },
       { to: '/schedules', label: 'Jadwal Kuliah', icon: <CalendarDays size={17} /> },
       { to: '/attendance', label: 'Presensi', icon: <ClipboardList size={17} /> },
+      { to: '/attendance/realization', label: 'Realisasi & Kehadiran Dosen', icon: <Activity size={17} /> },
+      { to: '/bkd-review', label: 'Pengesahan BKD', icon: <BookCheck size={17} /> },
+      { to: '/attendance/settings', label: 'Pengaturan Presensi', icon: <MapPin size={17} /> },
       { to: '/grades', label: 'Nilai', icon: <ScrollText size={17} /> },
       { to: '/guidances', label: 'Bimbingan (PA)', icon: <NotebookPen size={17} /> },
       { to: '/krs', label: 'Persetujuan KRS', icon: <ClipboardCheck size={17} /> },
@@ -94,6 +105,15 @@ const adminMenu: { section: string; items: MenuItem[] }[] = [
     items: [
       { to: '/scholarships', label: 'Program Beasiswa', icon: <Award size={17} /> },
       { to: '/scholarships/applications', label: 'Seleksi', icon: <BadgeCheck size={17} /> },
+    ],
+  },
+  {
+    section: 'Kemahasiswaan',
+    items: [
+      { to: '/organizations', label: 'Organisasi (Ormawa)', icon: <Users size={17} /> },
+      { to: '/activities', label: 'Verifikasi Kegiatan/SKPI', icon: <Trophy size={17} /> },
+      { to: '/leave-requests', label: 'Cuti & Pengunduran', icon: <PauseCircle size={17} /> },
+      { to: '/tickets', label: 'Helpdesk', icon: <LifeBuoy size={17} /> },
     ],
   },
   {
@@ -130,6 +150,8 @@ const lecturerMenu: { section: string; items: MenuItem[] }[] = [
       { to: '/feed', label: 'Pengumuman', icon: <Megaphone size={17} /> },
       { to: '/my-schedule', label: 'Jadwal Mengajar', icon: <CalendarDays size={17} /> },
       { to: '/attendance', label: 'Presensi', icon: <ClipboardList size={17} /> },
+      { to: '/attendance/realization', label: 'Realisasi Mengajar', icon: <Activity size={17} /> },
+      { to: '/my-bkd', label: 'BKD Saya', icon: <BookCheck size={17} /> },
       { to: '/grades', label: 'Input Nilai', icon: <ScrollText size={17} /> },
       { to: '/elearning/materials', label: 'Materi Kuliah', icon: <Library size={17} /> },
       { to: '/elearning/assignments', label: 'Tugas', icon: <ClipboardList size={17} /> },
@@ -140,6 +162,7 @@ const lecturerMenu: { section: string; items: MenuItem[] }[] = [
       { to: '/internships', label: 'Bimbingan PKL/KP', icon: <Briefcase size={17} /> },
       { to: '/calendar', label: 'Kalender Akademik', icon: <CalendarDays size={17} /> },
       { to: '/my-library', label: 'Perpustakaan', icon: <Library size={17} /> },
+      { to: '/my-tickets', label: 'Bantuan/Helpdesk', icon: <LifeBuoy size={17} /> },
     ],
   },
 ];
@@ -158,6 +181,9 @@ const studentMenu: { section: string; items: MenuItem[] }[] = [
       { to: '/my-letters', label: 'Surat Akademik', icon: <Mail size={17} /> },
       { to: '/my-library', label: 'Perpustakaan', icon: <Library size={17} /> },
       { to: '/my-scholarship', label: 'Beasiswa', icon: <Award size={17} /> },
+      { to: '/my-activities', label: 'Kegiatan & SKPI', icon: <Trophy size={17} /> },
+      { to: '/my-leave', label: 'Cuti & Status', icon: <PauseCircle size={17} /> },
+      { to: '/my-tickets', label: 'Bantuan/Helpdesk', icon: <LifeBuoy size={17} /> },
       { to: '/calendar', label: 'Kalender Akademik', icon: <CalendarDays size={17} /> },
     ],
   },
@@ -166,62 +192,69 @@ const studentMenu: { section: string; items: MenuItem[] }[] = [
 export default function Layout() {
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const menu =
     user?.role === 'CAMPUS_ADMIN' ? adminMenu : user?.role === 'LECTURER' ? lecturerMenu : studentMenu;
 
+  // Bangun item Menu Ant Design berkelompok per seksi.
+  const menuItems = menu.map((group) => ({
+    key: group.section,
+    type: 'group' as const,
+    label: group.section,
+    children: group.items.map((item) => ({
+      key: item.to,
+      icon: item.icon,
+      label: item.label,
+    })),
+  }));
+
+  // Tentukan menu aktif berdasarkan path terpanjang yang cocok.
+  const allPaths = menu.flatMap((g) => g.items.map((i) => i.to));
+  const selectedKey =
+    allPaths
+      .filter((p) => (p === '/' ? location.pathname === '/' : location.pathname.startsWith(p)))
+      .sort((a, b) => b.length - a.length)[0] ?? location.pathname;
+
   return (
-    <div className="flex min-h-screen">
-      <aside className="fixed inset-y-0 left-0 flex w-60 flex-col border-r border-slate-200 bg-white">
-        <div className="flex items-center gap-2 border-b border-slate-100 px-5 py-4">
+    <AntLayout style={{ minHeight: '100vh' }}>
+      <AntLayout.Sider width={248} theme="light" style={{ position: 'fixed', insetBlock: 0, insetInlineStart: 0, overflow: 'auto', borderInlineEnd: '1px solid #f0f0f0' }}>
+        <div className="flex items-center gap-2 px-5 py-4">
           <GraduationCap className="text-primary-600" size={24} />
           <span className="text-lg font-bold tracking-tight">Akademika</span>
         </div>
-        <nav className="flex-1 overflow-y-auto px-3 py-4">
-          {menu.map((group) => (
-            <div key={group.section} className="mb-4">
-              <div className="mb-1 px-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                {group.section}
-              </div>
-              {group.items.map((item) => (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  end={item.to === '/'}
-                  className={({ isActive }) =>
-                    `mb-0.5 flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm transition ${
-                      isActive
-                        ? 'bg-primary-50 font-medium text-primary-700'
-                        : 'text-slate-600 hover:bg-slate-100'
-                    }`
-                  }
-                >
-                  {item.icon}
-                  {item.label}
-                </NavLink>
-              ))}
-            </div>
-          ))}
-        </nav>
-        <div className="border-t border-slate-100 p-3">
-          <div className="mb-2 px-2">
-            <div className="truncate text-sm font-medium">{user?.name}</div>
-            <div className="truncate text-xs text-slate-400">{user?.email}</div>
-          </div>
-          <button
-            onClick={() => {
-              logout();
-              navigate('/login');
+        <Menu
+          mode="inline"
+          selectedKeys={[selectedKey]}
+          items={menuItems}
+          onClick={({ key }) => navigate(key)}
+          style={{ borderInlineEnd: 'none' }}
+        />
+      </AntLayout.Sider>
+      <AntLayout style={{ marginInlineStart: 248 }}>
+        <AntLayout.Header
+          style={{ position: 'sticky', top: 0, zIndex: 30, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 12, background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(8px)', borderBottom: '1px solid #f0f0f0', paddingInline: 24 }}
+        >
+          <NotificationBell />
+          <Dropdown
+            menu={{
+              items: [
+                { key: 'email', label: user?.email, disabled: true },
+                { type: 'divider' },
+                { key: 'logout', icon: <LogOut size={15} />, label: 'Keluar', danger: true, onClick: () => { logout(); navigate('/login'); } },
+              ],
             }}
-            className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-sm text-red-600 hover:bg-red-50"
           >
-            <LogOut size={16} /> Keluar
-          </button>
-        </div>
-      </aside>
-      <main className="ml-60 flex-1 p-6">
-        <Outlet />
-      </main>
-    </div>
+            <div className="flex cursor-pointer items-center gap-2">
+              <Avatar style={{ backgroundColor: '#4263eb' }}>{user?.name?.charAt(0)?.toUpperCase()}</Avatar>
+              <span className="text-sm font-medium">{user?.name}</span>
+            </div>
+          </Dropdown>
+        </AntLayout.Header>
+        <AntLayout.Content style={{ padding: 24 }}>
+          <Outlet />
+        </AntLayout.Content>
+      </AntLayout>
+    </AntLayout>
   );
 }

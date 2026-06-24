@@ -568,3 +568,117 @@ export interface ScholarshipApplication {
   scholarship?: Scholarship | null;
   student?: Student | null;
 }
+
+// ── Ormawa & Kegiatan Mahasiswa (SKPI) ───────────────────────────────────────
+export interface StudentOrganization {
+  id: string;
+  name: string;
+  type: string;
+  description: string;
+  period: string;
+  advisor_lecturer_id?: string | null;
+  is_active: boolean;
+  advisor?: Lecturer | null;
+}
+
+export interface StudentActivity {
+  id: string;
+  student_id: string;
+  student_name: string;
+  organization_id?: string | null;
+  title: string;
+  category: string;
+  role: string;
+  level: string;
+  date: string;
+  points: number;
+  certificate_url: string;
+  status: string;
+  verify_note: string;
+  organization?: StudentOrganization | null;
+}
+
+// ── Cuti & Pengunduran Diri ──────────────────────────────────────────────────
+export interface LeaveRequest {
+  id: string;
+  student_id: string;
+  student_name: string;
+  type: string;
+  academic_year_id?: string | null;
+  reason: string;
+  document_url: string;
+  status: string;
+  review_note: string;
+  decided_at?: string | null;
+  created_at?: string;
+  academic_year?: AcademicYear | null;
+}
+
+// ── Helpdesk / Tiket ─────────────────────────────────────────────────────────
+export interface TicketReply {
+  id: string;
+  ticket_id: string;
+  author_name: string;
+  author_role: string;
+  message: string;
+  created_at: string;
+}
+
+export interface Ticket {
+  id: string;
+  user_id: string;
+  opener_name: string;
+  opener_role: string;
+  category: string;
+  subject: string;
+  description: string;
+  priority: string;
+  status: string;
+  replies?: TicketReply[];
+  created_at: string;
+  updated_at: string;
+}
+
+// ── Notifikasi ───────────────────────────────────────────────────────────────
+export interface AppNotification {
+  id: string;
+  title: string;
+  body: string;
+  type: string;
+  link: string;
+  is_read: boolean;
+  created_at: string;
+}
+
+// ── Kehadiran/Realisasi Dosen ────────────────────────────────────────────────
+export interface LecturerRecapRow {
+  schedule: Schedule;
+  meetings_held: number;
+  lecturer_present: number;
+  target_meetings: number;
+  realization_pct: number;
+  presence_pct: number;
+}
+
+// ── BKD (Beban Kerja Dosen) ──────────────────────────────────────────────────
+export interface BkdItem {
+  id: string;
+  report_id: string;
+  category: string;
+  description: string;
+  sks: number;
+  evidence_url: string;
+}
+
+export interface BkdReport {
+  id: string;
+  lecturer_id: string;
+  academic_year_id: string;
+  teaching_sks: number;
+  status: string;
+  review_note: string;
+  decided_at?: string | null;
+  lecturer?: Lecturer | null;
+  academic_year?: AcademicYear | null;
+  items?: BkdItem[];
+}

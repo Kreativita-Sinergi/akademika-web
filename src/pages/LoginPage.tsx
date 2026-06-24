@@ -2,10 +2,11 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { GraduationCap } from 'lucide-react';
+import { Card, Form, Input, Button, Typography } from 'antd';
+import { MailOutlined, LockOutlined } from '@ant-design/icons';
 import api from '../lib/axios';
 import { errorMessage } from '../api/crud';
 import { useAuthStore } from '../store/auth';
-import { Button, Field, inputClass } from '../components/ui';
 import type { ApiResponse } from '../types';
 
 interface LoginData {
@@ -19,17 +20,14 @@ interface LoginData {
 }
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const setAuth = useAuthStore((s) => s.setAuth);
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onFinish = async (values: { email: string; password: string }) => {
     setLoading(true);
     try {
-      const res = await api.post<ApiResponse<LoginData>>('/auth/login', { email, password });
+      const res = await api.post<ApiResponse<LoginData>>('/auth/login', values);
       const data = res.data.data;
       setAuth(data.token, {
         user_id: data.user_id,
@@ -50,38 +48,24 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-primary-50 to-slate-100 p-4">
-      <div className="w-full max-w-sm rounded-2xl bg-white p-8 shadow-lg">
+      <Card style={{ width: '100%', maxWidth: 380 }} variant="borderless" className="shadow-lg">
         <div className="mb-6 flex flex-col items-center">
           <GraduationCap className="mb-2 text-primary-600" size={40} />
-          <h1 className="text-2xl font-bold tracking-tight">Akademika</h1>
-          <p className="text-sm text-slate-500">Sistem Informasi Akademik Kampus</p>
+          <Typography.Title level={3} style={{ margin: 0 }}>Akademika</Typography.Title>
+          <Typography.Text type="secondary">Sistem Informasi Akademik Kampus</Typography.Text>
         </div>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <Field label="Email">
-            <input
-              type="email"
-              className={inputClass}
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              placeholder="email@kampus.ac.id"
-            />
-          </Field>
-          <Field label="Password">
-            <input
-              type="password"
-              className={inputClass}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              placeholder="••••••••"
-            />
-          </Field>
-          <Button type="submit" disabled={loading} className="w-full">
-            {loading ? 'Memproses...' : 'Masuk'}
+        <Form layout="vertical" onFinish={onFinish} requiredMark={false} size="large">
+          <Form.Item name="email" label="Email" rules={[{ required: true, type: 'email', message: 'Email tidak valid' }]}>
+            <Input prefix={<MailOutlined />} placeholder="email@kampus.ac.id" />
+          </Form.Item>
+          <Form.Item name="password" label="Password" rules={[{ required: true, message: 'Password wajib diisi' }]}>
+            <Input.Password prefix={<LockOutlined />} placeholder="••••••••" />
+          </Form.Item>
+          <Button type="primary" htmlType="submit" loading={loading} block>
+            Masuk
           </Button>
-        </form>
-      </div>
+        </Form>
+      </Card>
     </div>
   );
 }

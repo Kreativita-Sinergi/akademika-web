@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Card, Timeline, Flex, Typography } from 'antd';
 import { CalendarDays } from 'lucide-react';
 import ResourcePage from '../components/crud/ResourcePage';
 import { useOptions } from '../hooks/useList';
@@ -78,36 +79,30 @@ export function AcademicCalendarViewPage() {
 
   return (
     <div>
-      <h1 className="mb-4 flex items-center gap-2 text-xl font-semibold">
-        <CalendarDays size={20} className="text-primary-600" /> Kalender Akademik
-      </h1>
+      <Typography.Title level={4} style={{ marginTop: 0 }}>
+        <CalendarDays size={20} className="mr-2 inline text-primary-600" /> Kalender Akademik
+      </Typography.Title>
       {!loading && items.length === 0 && <EmptyState message="Belum ada agenda mendatang" />}
-      <div className="space-y-3">
-        {items.map((e) => (
-          <div
-            key={e.id}
-            className={`flex gap-3 rounded-xl border bg-white p-4 ${e.is_holiday ? 'border-rose-200' : 'border-slate-200'}`}
-          >
-            <div className="flex w-14 shrink-0 flex-col items-center justify-center rounded-lg bg-primary-50 py-1 text-primary-700">
-              <span className="text-lg font-bold leading-none">{new Date(e.start_date).getDate()}</span>
-              <span className="text-[10px] uppercase">
-                {new Date(e.start_date).toLocaleDateString('id-ID', { month: 'short' })}
-              </span>
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="mb-0.5 flex items-center gap-2">
-                <h2 className="font-semibold">{e.title}</h2>
-                <Badge value={categoryLabel[e.category] ?? e.category} />
+      <Card>
+        <Timeline
+          items={items.map((e) => ({
+            color: e.is_holiday ? 'red' : 'blue',
+            children: (
+              <div>
+                <Flex align="center" gap={8} wrap>
+                  <span className="font-semibold">{e.title}</span>
+                  <Badge value={categoryLabel[e.category] ?? e.category} />
+                </Flex>
+                <div className="text-xs text-slate-400">
+                  {formatDate(e.start_date)}
+                  {e.end_date && e.end_date.slice(0, 10) !== e.start_date.slice(0, 10) ? ` — ${formatDate(e.end_date)}` : ''}
+                </div>
+                {e.description && <div className="mt-1 whitespace-pre-line text-sm text-slate-600">{e.description}</div>}
               </div>
-              <p className="text-xs text-slate-400">
-                {formatDate(e.start_date)}
-                {e.end_date && e.end_date.slice(0, 10) !== e.start_date.slice(0, 10) ? ` — ${formatDate(e.end_date)}` : ''}
-              </p>
-              {e.description && <p className="mt-1 whitespace-pre-line text-sm text-slate-600">{e.description}</p>}
-            </div>
-          </div>
-        ))}
-      </div>
+            ),
+          }))}
+        />
+      </Card>
     </div>
   );
 }

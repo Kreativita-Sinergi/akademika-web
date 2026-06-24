@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Card, Flex, Typography } from 'antd';
 import { Megaphone, Pin } from 'lucide-react';
 import ResourcePage from '../components/crud/ResourcePage';
 import api from '../lib/axios';
@@ -75,27 +76,28 @@ export function AnnouncementFeedPage() {
 
   return (
     <div>
-      <h1 className="mb-4 flex items-center gap-2 text-xl font-semibold">
-        <Megaphone size={20} className="text-primary-600" /> Pengumuman
-      </h1>
+      <Typography.Title level={4} style={{ marginTop: 0 }}>
+        <Megaphone size={20} className="mr-2 inline text-primary-600" /> Pengumuman
+      </Typography.Title>
       {!loading && items.length === 0 && <EmptyState message="Belum ada pengumuman" />}
-      <div className="space-y-3">
+      <Flex vertical gap={12}>
         {items.map((a) => (
-          <div
+          <Card
             key={a.id}
-            className={`rounded-xl border bg-white p-4 ${a.is_pinned ? 'border-amber-300' : 'border-slate-200'}`}
-          >
-            <div className="mb-1 flex items-center justify-between gap-2">
-              <h2 className="flex items-center gap-1.5 font-semibold">
+            size="small"
+            style={a.is_pinned ? { borderColor: '#fcd34d' } : undefined}
+            title={
+              <Flex align="center" gap={6}>
                 {a.is_pinned && <Pin size={14} className="text-amber-500" />}
                 {a.title}
-              </h2>
-              <span className="shrink-0 text-xs text-slate-400">{formatDate(a.created_at)}</span>
-            </div>
+              </Flex>
+            }
+            extra={<span className="text-xs text-slate-400">{formatDate(a.created_at)}</span>}
+          >
             <p className="whitespace-pre-line text-sm text-slate-600">{a.body}</p>
-          </div>
+          </Card>
         ))}
-      </div>
+      </Flex>
     </div>
   );
 }

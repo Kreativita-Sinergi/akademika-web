@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
-import { ClipboardCheck, Plus, Trash2 } from 'lucide-react';
+import { ClipboardCheck, Plus, QrCode, Trash2 } from 'lucide-react';
 import api from '../lib/axios';
-import { createResource, deleteResource, errorMessage, getResource, listResource } from '../api/crud';
+import { createResource, deleteResource, errorMessage, getResource, listResource, patchResource } from '../api/crud';
 import { useAuthStore } from '../store/auth';
-import { Button, EmptyState, Field, Modal, dayNames, formatDate, inputClass } from '../components/ui';
+import { Badge, Button, EmptyState, Field, Modal, dayNames, formatDate, inputClass } from '../components/ui';
 import type { ApiResponse, Schedule, Student } from '../types';
 
 interface Session {
@@ -13,6 +13,10 @@ interface Session {
   date: string;
   topic: string;
   is_closed: boolean;
+  lecturer_present: boolean;
+  lecturer_status: string;
+  qr_token: string;
+  qr_active: boolean;
 }
 
 interface SessionStudent {
@@ -48,6 +52,17 @@ export default function AttendancePage() {
 
   const [detail, setDetail] = useState<{ session: Session; students: SessionStudent[] } | null>(null);
   const [marks, setMarks] = useState<Record<string, string>>({});
+  const [qrSession, setQrSession] = useState<Session | null>(null);
+
+  const toggleQr = async (session: Session, active: boolean) => {
+    try {
+      const updated = await patchResource<Session>(`/attendance/sessions/${session.id}/qr`, { active });
+      setQrSession(updated);
+      void loadSessions();
+    } catch (err) {
+      toast.error(errorMessage(err));
+    }
+  };
 
   // Dosen melihat jadwal mengajarnya sendiri; admin melihat semua jadwal.
   useEffect(() => {
@@ -168,6 +183,7 @@ export default function AttendancePage() {
                     <th className="px-4 py-3">Ke-</th>
                     <th className="px-4 py-3">Tanggal</th>
                     <th className="px-4 py-3">Materi / Berita Acara</th>
+                    <th className="px-4 py-3">Dosen</th>
                     <th className="px-4 py-3 text-right">Aksi</th>
                   </tr>
                 </thead>
@@ -178,7 +194,18 @@ export default function AttendancePage() {
                       <td className="px-4 py-3">{formatDate(session.date)}</td>
                       <td className="px-4 py-3">{session.topic}</td>
                       <td className="px-4 py-3">
+                        <Badge value={session.lecturer_present ? 'lunas' : 'menunggu'} />
+                        <span className="ml-1 text-xs capitalize text-slate-400">{session.lecturer_status?.replace('_', ' ')}</span>
+                      </td>
+                      <td className="px-4 py-3">
                         <div className="flex justify-end gap-1">
+                          <button
+                            onClick={() => { setQrSession(session); }}
+                            className={`rounded p-1.5 hover:bg-slate-100 ${session.qr_active ? 'text-emerald-600' : 'text-slate-500'}`}
+                            title="Presensi QR mandiri"
+                          >
+                            <QrCode size={15} />
+                          </button>
                           <button
                             onClick={() => void openDetail(session)}
                             className="rounded p-1.5 text-primary-600 hover:bg-primary-50"
@@ -296,6 +323,36 @@ export default function AttendancePage() {
           <Button variant="secondary" onClick={() => setDetail(null)}>Batal</Button>
           <Button onClick={() => void saveMarks()}>Simpan Presensi</Button>
         </div>
+      </Modal>
+
+      {/* Modal QR presensi mandiri */}
+      <Modal
+        open={qrSession !== null}
+        title={`Presensi QR — Pertemuan ${qrSession?.meeting_number ?? ''}`}
+        onClose={() => setQrSession(null)}
+      >
+        {qrSession && (
+          <div className="space-y-4 text-center">
+            {qrSession.qr_active ? (
+              <>
+                <p className="text-sm text-slate-500">Mahasiswa scan QR ini dari HP untuk presensi mandiri:</p>
+                <img
+                  alt="QR Presensi"
+                  className="mx-auto rounded-lg border border-slate-200"
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(`${window.location.origin}/presensi/${qrSession.qr_token}`)}`}
+                />
+                <p className="break-all text-xs text-slate-400">{window.location.origin}/presensi/{qrSession.qr_token}</p>
+                <Button variant="danger" onClick={() => void toggleQr(qrSession, false)}>Tutup Presensi QR</Button>
+              </>
+            ) : (
+              <>
+                <QrCode size={64} className="mx-auto text-slate-300" />
+                <p className="text-sm text-slate-500">Buka sesi presensi mandiri agar mahasiswa bisa scan QR dan mengisi kehadiran sendiri.</p>
+                <Button onClick={() => void toggleQr(qrSession, true)}>Buka Presensi QR</Button>
+              </>
+            )}
+          </div>
+        )}
       </Modal>
     </div>
   );

@@ -4,6 +4,7 @@ import { BookOpen, Library, RotateCcw } from 'lucide-react';
 import ResourcePage from '../components/crud/ResourcePage';
 import { useOptions } from '../hooks/useList';
 import { createResource, errorMessage, listResource, patchResource } from '../api/crud';
+import { downloadFile } from '../api/download';
 import api from '../lib/axios';
 import { Badge, Button, EmptyState, Field, Modal, formatDate, formatRupiah, inputClass } from '../components/ui';
 import type { ApiResponse, Book, BookLoan, Lecturer, Student } from '../types';
@@ -262,9 +263,14 @@ export function MyLibraryPage() {
 
   return (
     <div>
-      <h1 className="mb-4 flex items-center gap-2 text-xl font-semibold">
-        <Library size={20} className="text-primary-600" /> Perpustakaan
-      </h1>
+      <div className="mb-4 flex items-center justify-between">
+        <h1 className="flex items-center gap-2 text-xl font-semibold">
+          <Library size={20} className="text-primary-600" /> Perpustakaan
+        </h1>
+        <Button variant="secondary" onClick={() => void downloadFile('/library/my-card/pdf', 'kartu-perpustakaan.pdf')}>
+          Cetak Kartu Anggota
+        </Button>
+      </div>
       <div className="mb-4 flex gap-2 text-sm">
         {(['loans', 'catalog'] as const).map((v) => (
           <button

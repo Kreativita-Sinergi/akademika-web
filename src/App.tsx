@@ -41,6 +41,13 @@ import { YudisiumPage, SkpiPage } from './pages/YudisiumPage';
 import { AcademicCalendarPage, AcademicCalendarViewPage } from './pages/AcademicCalendarPage';
 import { BooksPage, LoansPage, MyLibraryPage } from './pages/LibraryPage';
 import { ScholarshipsPage, ScholarshipApplicationsPage, MyScholarshipPage } from './pages/ScholarshipPage';
+import { OrganizationsPage, ActivitiesReviewPage, MyActivitiesPage } from './pages/OrganizationPage';
+import { LeaveRequestsPage, MyLeavePage } from './pages/LeavePage';
+import { TicketsPage, MyTicketsPage } from './pages/TicketPage';
+import SelfCheckinPage from './pages/SelfCheckinPage';
+import LecturerRealizationPage from './pages/LecturerRealizationPage';
+import AttendanceSettingsPage from './pages/AttendanceSettingsPage';
+import { MyBkdPage, BkdReviewPage } from './pages/BkdPage';
 
 function RequireAuth() {
   const token = useAuthStore((s) => s.token);
@@ -96,6 +103,13 @@ export default function App() {
             <Route path="/library/loans" element={<LoansPage />} />
             <Route path="/scholarships" element={<ScholarshipsPage />} />
             <Route path="/scholarships/applications" element={<ScholarshipApplicationsPage />} />
+            <Route path="/organizations" element={<OrganizationsPage />} />
+            <Route path="/activities" element={<ActivitiesReviewPage />} />
+            <Route path="/leave-requests" element={<LeaveRequestsPage />} />
+            <Route path="/tickets" element={<TicketsPage />} />
+            <Route path="/attendance/realization" element={<LecturerRealizationPage />} />
+            <Route path="/attendance/settings" element={<AttendanceSettingsPage />} />
+            <Route path="/bkd-review" element={<BkdReviewPage />} />
             <Route path="/reports" element={<ReportsPage />} />
             <Route path="/audit-logs" element={<AuditLogsPage />} />
             {/* Portal dosen & mahasiswa */}
@@ -110,6 +124,11 @@ export default function App() {
             <Route path="/calendar" element={<AcademicCalendarViewPage />} />
             <Route path="/my-library" element={<MyLibraryPage />} />
             <Route path="/my-scholarship" element={<MyScholarshipPage />} />
+            <Route path="/my-activities" element={<MyActivitiesPage />} />
+            <Route path="/my-leave" element={<MyLeavePage />} />
+            <Route path="/my-tickets" element={<MyTicketsPage />} />
+            <Route path="/my-bkd" element={<MyBkdPage />} />
+            <Route path="/presensi/:token" element={<SelfCheckinPage />} />
             {/* UKT */}
             <Route path="/ukt/groups" element={<UktGroupsPage />} />
             <Route path="/ukt/invoices" element={<InvoicesPage />} />

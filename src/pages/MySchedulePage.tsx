@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { MapPin } from 'lucide-react';
+import { Row, Col, Card, Spin, Empty, Flex, Tag, Typography } from 'antd';
+import { EnvironmentOutlined, ClockCircleOutlined } from '@ant-design/icons';
 import { getResource } from '../api/crud';
 import { dayNames } from '../components/ui';
 import { useAuthStore } from '../store/auth';
@@ -26,54 +27,48 @@ export default function MySchedulePage() {
 
   return (
     <div>
-      <h1 className="mb-1 text-xl font-semibold">
+      <Typography.Title level={4} style={{ marginTop: 0, marginBottom: 4 }}>
         {role === 'LECTURER' ? 'Jadwal Mengajar Saya' : 'Jadwal Kuliah Saya'}
-      </h1>
-      <p className="mb-5 text-sm text-slate-500">
+      </Typography.Title>
+      <Typography.Paragraph type="secondary">
         {role === 'LECTURER'
           ? 'Jadwal terbentuk otomatis dari penjadwalan yang diinput admin kampus.'
           : 'Jadwal kelas Anda lengkap dengan ruangan tiap mata kuliah.'}
-      </p>
+      </Typography.Paragraph>
 
-      {loading && <div className="py-12 text-center text-slate-400">Memuat...</div>}
+      {loading && (
+        <Flex justify="center" style={{ padding: 48 }}><Spin size="large" /></Flex>
+      )}
       {!loading && schedules.length === 0 && (
-        <div className="rounded-xl border border-dashed border-slate-300 py-16 text-center text-slate-400">
-          Belum ada jadwal pada tahun akademik aktif
-        </div>
+        <Empty description="Belum ada jadwal pada tahun akademik aktif" style={{ padding: 48 }} />
       )}
 
-      <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
+      <Row gutter={[16, 16]}>
         {[1, 2, 3, 4, 5, 6, 7]
           .filter((day) => byDay.has(day))
           .map((day) => (
-            <div key={day} className="rounded-xl border border-slate-200 bg-white">
-              <div className="border-b border-slate-100 px-4 py-3 font-semibold">{dayNames[day]}</div>
-              <div className="divide-y divide-slate-100">
+            <Col xs={24} lg={12} xl={8} key={day}>
+              <Card title={dayNames[day]} styles={{ body: { padding: 0 } }}>
                 {(byDay.get(day) ?? [])
                   .sort((a, b) => a.start_time.localeCompare(b.start_time))
-                  .map((s) => (
-                    <div key={s.id} className="px-4 py-3">
-                      <div className="flex items-center justify-between">
+                  .map((s, i, arr) => (
+                    <div key={s.id} style={{ padding: '12px 16px', borderBottom: i < arr.length - 1 ? '1px solid #f0f0f0' : 'none' }}>
+                      <Flex justify="space-between" align="center">
                         <span className="font-medium">{s.course?.name ?? '-'}</span>
-                        <span className="text-sm text-slate-500">
-                          {s.start_time}–{s.end_time}
+                        <Tag icon={<ClockCircleOutlined />} bordered={false}>{s.start_time}–{s.end_time}</Tag>
+                      </Flex>
+                      <Flex justify="space-between" align="center" style={{ marginTop: 4, color: '#64748b', fontSize: 13 }}>
+                        <span>{role === 'LECTURER' ? `Kelas ${s.class_group?.code ?? '-'}` : s.lecturer?.name ?? '-'}</span>
+                        <span style={{ color: '#4263eb', fontWeight: 500 }}>
+                          <EnvironmentOutlined /> {s.room ? `${s.room.code} · ${s.room.building}` : '-'}
                         </span>
-                      </div>
-                      <div className="mt-1 flex items-center justify-between text-sm text-slate-500">
-                        <span>
-                          {role === 'LECTURER' ? `Kelas ${s.class_group?.code ?? '-'}` : s.lecturer?.name ?? '-'}
-                        </span>
-                        <span className="flex items-center gap-1 font-medium text-primary-600">
-                          <MapPin size={13} />
-                          {s.room ? `${s.room.code} · ${s.room.building}` : '-'}
-                        </span>
-                      </div>
+                      </Flex>
                     </div>
                   ))}
-              </div>
-            </div>
+              </Card>
+            </Col>
           ))}
-      </div>
+      </Row>
     </div>
   );
 }

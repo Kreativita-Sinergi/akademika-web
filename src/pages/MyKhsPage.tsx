@@ -1,10 +1,21 @@
 import { useEffect, useState } from 'react';
-import { Download } from 'lucide-react';
+import { Row, Col, Card, Statistic, Select, Table, Flex, Typography } from 'antd';
+import type { ColumnsType } from 'antd/es/table';
+import { DownloadOutlined } from '@ant-design/icons';
 import api from '../lib/axios';
 import { useOptions } from '../hooks/useList';
 import { downloadFile } from '../api/download';
-import { Button, Field, inputClass } from '../components/ui';
-import type { AcademicYear, ApiResponse, Khs, Transcript } from '../types';
+import { Button } from '../components/ui';
+import type { AcademicYear, ApiResponse, Khs, KhsItem, Transcript } from '../types';
+
+const gradeColumns: ColumnsType<KhsItem> = [
+  { title: 'Kode', dataIndex: 'course_code', key: 'code' },
+  { title: 'Mata Kuliah', dataIndex: 'course_name', key: 'name' },
+  { title: 'SKS', dataIndex: 'sks', key: 'sks', width: 70 },
+  { title: 'Nilai', key: 'score', width: 80, render: (_, r) => r.total_score.toFixed(1) },
+  { title: 'Huruf', dataIndex: 'letter_grade', key: 'letter', width: 80, render: (v) => <b>{v}</b> },
+  { title: 'Bobot', key: 'point', width: 80, render: (_, r) => r.grade_point.toFixed(1) },
+];
 
 // KHS per semester + transkrip lengkap untuk mahasiswa yang login.
 export default function MyKhsPage() {
@@ -14,10 +25,7 @@ export default function MyKhsPage() {
   const [transcript, setTranscript] = useState<Transcript | null>(null);
 
   useEffect(() => {
-    void api
-      .get<ApiResponse<Transcript>>('/grades/my-transcript')
-      .then((res) => setTranscript(res.data.data))
-      .catch(() => {});
+    void api.get<ApiResponse<Transcript>>('/grades/my-transcript').then((res) => setTranscript(res.data.data)).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -33,108 +41,58 @@ export default function MyKhsPage() {
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-xl font-semibold">KHS & Transkrip</h1>
-        <Button
-          variant="secondary"
-          onClick={() => void downloadFile('/grades/my-transcript/pdf', 'transkrip.pdf')}
-        >
-          <span className="flex items-center gap-1.5">
-            <Download size={15} /> Unduh Transkrip (PDF)
-          </span>
+      <Flex justify="space-between" align="center" style={{ marginBottom: 16 }}>
+        <Typography.Title level={4} style={{ margin: 0 }}>KHS & Transkrip</Typography.Title>
+        <Button variant="secondary" onClick={() => void downloadFile('/grades/my-transcript/pdf', 'transkrip.pdf')}>
+          <span className="flex items-center gap-1.5"><DownloadOutlined /> Unduh Transkrip (PDF)</span>
         </Button>
-      </div>
+      </Flex>
 
-      <div className="mb-6 grid gap-4 sm:grid-cols-3">
-        <div className="rounded-xl border border-slate-200 bg-white p-4">
-          <div className="text-sm text-slate-500">IPK</div>
-          <div className="mt-1 text-3xl font-bold text-primary-600">{transcript ? transcript.ipk.toFixed(2) : '-'}</div>
-        </div>
-        <div className="rounded-xl border border-slate-200 bg-white p-4">
-          <div className="text-sm text-slate-500">Total SKS</div>
-          <div className="mt-1 text-3xl font-bold">{transcript?.total_sks ?? '-'}</div>
-        </div>
-        <div className="rounded-xl border border-slate-200 bg-white p-4">
-          <div className="text-sm text-slate-500">Program Studi</div>
-          <div className="mt-1 text-lg font-semibold">{transcript?.study_program || '-'}</div>
-        </div>
-      </div>
+      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+        <Col xs={24} sm={8}>
+          <Card><Statistic title="IPK" value={transcript ? transcript.ipk : 0} precision={2} valueStyle={{ color: '#4263eb' }} /></Card>
+        </Col>
+        <Col xs={24} sm={8}><Card><Statistic title="Total SKS" value={transcript?.total_sks ?? 0} /></Card></Col>
+        <Col xs={24} sm={8}>
+          <Card>
+            <Typography.Text type="secondary">Program Studi</Typography.Text>
+            <div className="mt-1 text-lg font-semibold">{transcript?.study_program || '-'}</div>
+          </Card>
+        </Col>
+      </Row>
 
       <div className="mb-4 max-w-xs">
-        <Field label="Lihat KHS Tahun Akademik">
-          <select className={inputClass} value={yearId} onChange={(e) => setYearId(e.target.value)}>
-            <option value="">— pilih —</option>
-            {years.map((y) => (
-              <option key={y.value} value={y.value}>{y.label}</option>
-            ))}
-          </select>
-        </Field>
+        <Typography.Text type="secondary">Lihat KHS Tahun Akademik</Typography.Text>
+        <Select
+          className="mt-1 w-full"
+          value={yearId || undefined}
+          placeholder="— pilih —"
+          options={years}
+          onChange={setYearId}
+          allowClear
+        />
       </div>
 
       {khs && (
-        <div className="mb-6 rounded-xl border border-slate-200 bg-white p-5">
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="font-semibold">
-              KHS {khs.academic_year} {khs.semester} (Semester {khs.semester_number})
-            </h2>
-            <div className="flex items-center gap-3 text-sm">
-              <span>
-                IPS: <span className="font-bold text-primary-600">{khs.ips.toFixed(2)}</span>
-              </span>
-              <Button
-                variant="secondary"
-                onClick={() => void downloadFile('/grades/my-khs/pdf', `khs-smt${khs.semester_number}.pdf`, { academic_year_id: yearId })}
-              >
-                <span className="flex items-center gap-1.5">
-                  <Download size={14} /> PDF
-                </span>
+        <Card
+          style={{ marginBottom: 24 }}
+          title={`KHS ${khs.academic_year} ${khs.semester} (Semester ${khs.semester_number})`}
+          extra={
+            <Flex align="center" gap={12}>
+              <span>IPS: <b style={{ color: '#4263eb' }}>{khs.ips.toFixed(2)}</b></span>
+              <Button variant="secondary" onClick={() => void downloadFile('/grades/my-khs/pdf', `khs-smt${khs.semester_number}.pdf`, { academic_year_id: yearId })}>
+                <span className="flex items-center gap-1"><DownloadOutlined /> PDF</span>
               </Button>
-            </div>
-          </div>
-          <KhsTable items={khs.items} />
-        </div>
+            </Flex>
+          }
+        >
+          <Table rowKey={(_, i) => String(i)} columns={gradeColumns} dataSource={khs.items} pagination={false} size="small" />
+        </Card>
       )}
 
-      <div className="rounded-xl border border-slate-200 bg-white p-5">
-        <h2 className="mb-3 font-semibold">Transkrip Lengkap</h2>
-        <KhsTable items={transcript?.items ?? []} />
-      </div>
+      <Card title="Transkrip Lengkap">
+        <Table rowKey={(_, i) => String(i)} columns={gradeColumns} dataSource={transcript?.items ?? []} pagination={false} size="small" />
+      </Card>
     </div>
-  );
-}
-
-function KhsTable({ items }: { items: Khs['items'] }) {
-  return (
-    <table className="w-full text-sm">
-      <thead>
-        <tr className="border-b text-left text-xs uppercase text-slate-500">
-          <th className="py-2">Kode</th>
-          <th>Mata Kuliah</th>
-          <th>SKS</th>
-          <th>Nilai</th>
-          <th>Huruf</th>
-          <th>Bobot</th>
-        </tr>
-      </thead>
-      <tbody>
-        {items.map((item, i) => (
-          <tr key={i} className="border-b last:border-0">
-            <td className="py-2">{item.course_code}</td>
-            <td>{item.course_name}</td>
-            <td>{item.sks}</td>
-            <td>{item.total_score.toFixed(1)}</td>
-            <td className="font-semibold">{item.letter_grade}</td>
-            <td>{item.grade_point.toFixed(1)}</td>
-          </tr>
-        ))}
-        {items.length === 0 && (
-          <tr>
-            <td colSpan={6} className="py-6 text-center text-slate-400">
-              Belum ada nilai
-            </td>
-          </tr>
-        )}
-      </tbody>
-    </table>
   );
 }

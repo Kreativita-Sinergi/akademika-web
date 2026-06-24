@@ -4,6 +4,7 @@ import { Award, GraduationCap, Send } from 'lucide-react';
 import ResourcePage from '../components/crud/ResourcePage';
 import { useOptions } from '../hooks/useList';
 import { createResource, errorMessage, listResource, patchResource } from '../api/crud';
+import { downloadFile } from '../api/download';
 import api from '../lib/axios';
 import { Badge, Button, EmptyState, Field, Modal, formatDate, formatRupiah, inputClass } from '../components/ui';
 import type { AcademicYear, ApiResponse, Scholarship, ScholarshipApplication } from '../types';
@@ -153,6 +154,9 @@ export function ScholarshipApplicationsPage() {
                 <td className="px-4 py-3 text-right">
                   {a.status === 'diajukan' && (
                     <Button variant="secondary" onClick={() => { setReviewing(a); setNote(''); }}>Tinjau</Button>
+                  )}
+                  {a.status === 'diterima' && (
+                    <Button variant="secondary" onClick={() => void downloadFile(`/scholarships/applications/${a.id}/decree/pdf`, `sk-beasiswa-${a.student_name}.pdf`)}>Unduh SK</Button>
                   )}
                 </td>
               </tr>

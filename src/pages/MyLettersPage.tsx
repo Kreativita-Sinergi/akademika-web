@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import toast from 'react-hot-toast';
-import { Download, Plus } from 'lucide-react';
+import { Table, Select, Input, Flex, Typography, Tooltip } from 'antd';
+import type { ColumnsType } from 'antd/es/table';
+import { DownloadOutlined, PlusOutlined } from '@ant-design/icons';
 import { useList } from '../hooks/useList';
 import { createResource, errorMessage } from '../api/crud';
 import { downloadFile } from '../api/download';
-import { Badge, Button, EmptyState, Field, Modal, Pagination, inputClass, formatDate } from '../components/ui';
+import { Badge, Button, EmptyState, Field, Modal, Pagination, formatDate } from '../components/ui';
 import { letterTypeLabel } from './LettersPage';
 import type { LetterRequest } from '../types';
 
@@ -42,83 +44,56 @@ export default function MyLettersPage() {
     }
   };
 
+  const columns: ColumnsType<LetterRequest> = [
+    { title: 'Tanggal', key: 'date', render: (_, l) => formatDate(l.created_at) },
+    { title: 'Jenis Surat', key: 'type', render: (_, l) => letterTypeLabel[l.type] ?? l.type },
+    { title: 'Keperluan', dataIndex: 'purpose', key: 'purpose' },
+    { title: 'No. Surat', key: 'number', render: (_, l) => l.letter_number || '-' },
+    { title: 'Status', key: 'status', render: (_, l) => <Badge value={l.status} /> },
+    {
+      title: 'Aksi',
+      key: 'action',
+      align: 'right',
+      render: (_, l) =>
+        l.status === 'disetujui' ? (
+          <Button variant="ghost" onClick={() => void downloadFile(`/letters/${l.id}/my-pdf`, `surat-${l.id}.pdf`)}>
+            <DownloadOutlined />
+          </Button>
+        ) : l.status === 'ditolak' && l.note ? (
+          <Tooltip title={l.note}><span className="text-xs text-red-500">ditolak</span></Tooltip>
+        ) : null,
+    },
+  ];
+
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Surat Akademik Saya</h1>
-        <Button onClick={() => setOpen(true)}>
-          <span className="flex items-center gap-1">
-            <Plus size={16} /> Ajukan Surat
-          </span>
-        </Button>
-      </div>
+      <Flex justify="space-between" align="center" style={{ marginBottom: 16 }}>
+        <Typography.Title level={4} style={{ margin: 0 }}>Surat Akademik Saya</Typography.Title>
+        <Button onClick={() => setOpen(true)}><span className="flex items-center gap-1"><PlusOutlined /> Ajukan Surat</span></Button>
+      </Flex>
 
-      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs uppercase text-slate-500">
-              <th className="px-4 py-3 font-medium">Tanggal</th>
-              <th className="px-4 py-3 font-medium">Jenis Surat</th>
-              <th className="px-4 py-3 font-medium">Keperluan</th>
-              <th className="px-4 py-3 font-medium">No. Surat</th>
-              <th className="px-4 py-3 font-medium">Status</th>
-              <th className="px-4 py-3 text-right font-medium">Aksi</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((l) => (
-              <tr key={l.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50">
-                <td className="px-4 py-3">{formatDate(l.created_at)}</td>
-                <td className="px-4 py-3">{letterTypeLabel[l.type] ?? l.type}</td>
-                <td className="px-4 py-3">{l.purpose}</td>
-                <td className="px-4 py-3">{l.letter_number || '-'}</td>
-                <td className="px-4 py-3"><Badge value={l.status} /></td>
-                <td className="px-4 py-3 text-right">
-                  {l.status === 'disetujui' && (
-                    <button
-                      onClick={() => void downloadFile(`/letters/${l.id}/my-pdf`, `surat-${l.id}.pdf`)}
-                      className="rounded p-1.5 text-primary-600 hover:bg-primary-50"
-                      title="Unduh PDF"
-                    >
-                      <Download size={15} />
-                    </button>
-                  )}
-                  {l.status === 'ditolak' && l.note && (
-                    <span className="text-xs text-red-500">{l.note}</span>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {!loading && items.length === 0 && <EmptyState message="Belum ada pengajuan surat" />}
-      </div>
-
+      <Table
+        rowKey="id"
+        loading={loading}
+        columns={columns}
+        dataSource={items}
+        pagination={false}
+        size="middle"
+        locale={{ emptyText: <EmptyState message="Belum ada pengajuan surat" /> }}
+      />
       <Pagination page={page} totalPage={totalPage} onChange={setPage} />
 
       <Modal open={open} title="Ajukan Surat Akademik" onClose={() => setOpen(false)}>
         <div className="space-y-3">
           <Field label="Jenis Surat">
-            <select className={inputClass} value={type} onChange={(e) => setType(e.target.value)}>
-              {typeOptions.map((o) => (
-                <option key={o.value} value={o.value}>{o.label}</option>
-              ))}
-            </select>
+            <Select className="w-full" value={type} options={typeOptions} onChange={setType} />
           </Field>
           <Field label="Keperluan">
-            <textarea
-              className={inputClass}
-              rows={3}
-              value={purpose}
-              onChange={(e) => setPurpose(e.target.value)}
-              placeholder="cth: pengajuan beasiswa, keperluan administrasi, dll."
-            />
+            <Input.TextArea rows={3} value={purpose} onChange={(e) => setPurpose(e.target.value)} placeholder="cth: pengajuan beasiswa, keperluan administrasi, dll." />
           </Field>
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="secondary" onClick={() => setOpen(false)}>Batal</Button>
-            <Button disabled={saving} onClick={() => void submit()}>
-              {saving ? 'Mengirim...' : 'Kirim Pengajuan'}
-            </Button>
+            <Button disabled={saving} onClick={() => void submit()}>{saving ? 'Mengirim...' : 'Kirim Pengajuan'}</Button>
           </div>
         </div>
       </Modal>
