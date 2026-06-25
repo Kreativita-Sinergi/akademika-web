@@ -62,8 +62,8 @@ export default function StudentsPage() {
         columns={[
           { key: 'nim', label: 'NIM', sortable: true },
           { key: 'name', label: 'Nama', sortable: true },
-          { key: 'study_program', label: 'Prodi', render: (s) => s.study_program?.name ?? '-' },
-          { key: 'class_group', label: 'Rombel', render: (s) => s.class_group?.code ?? '-' },
+          { key: 'study_program', label: 'Prodi', sortable: true, render: (s) => s.study_program?.name ?? '-' },
+          { key: 'class_group', label: 'Rombel', sortable: true, render: (s) => s.class_group?.code ?? '-' },
           { key: 'entry_year', label: 'Angkatan', sortable: true },
           { key: 'current_semester', label: 'Smt', sortable: true },
           { key: 'status', label: 'Status', render: (s) => <Badge value={s.status} /> },

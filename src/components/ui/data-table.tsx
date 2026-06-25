@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { Loader2, Inbox, Search, ChevronUp, ChevronDown, ChevronsUpDown, Download } from 'lucide-react';
+import { Loader2, Inbox, Search, ChevronUp, ChevronDown, ChevronsUpDown, Download, AlertCircle, RefreshCw } from 'lucide-react';
 import {
   Table,
   TableHeader,
@@ -125,6 +125,8 @@ function ServerTable<T>({
   const [exporting, setExporting] = useState(false);
   const [rows, setRows] = useState<T[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
+  const [retry, setRetry] = useState(0);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(defaultPageSize);
   const [search, setSearch] = useState('');
@@ -148,6 +150,7 @@ function ServerTable<T>({
 
   const load = useCallback(() => {
     setLoading(true);
+    setError(false);
     fetcher({
       page,
       limit,
@@ -161,12 +164,13 @@ function ServerTable<T>({
         setRows(r.data || []);
         setTotal(r.pagination?.total ?? (r.data?.length ?? 0));
       })
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, [fetcher, page, limit, debounced, sortBy, order, extraKey]);
 
   useEffect(() => {
     load();
-  }, [load, reloadKey]);
+  }, [load, reloadKey, retry]);
 
   const totalPage = Math.max(1, Math.ceil(total / limit));
 
@@ -258,6 +262,8 @@ function ServerTable<T>({
         rowKey={rowKey}
         rows={rows}
         loading={loading}
+        error={error}
+        onRetry={() => setRetry((r) => r + 1)}
         emptyText={emptyText}
         sortBy={sortBy}
         order={order}
@@ -320,6 +326,8 @@ interface ShellProps<T> {
   rowKey: (record: T) => string;
   rows: T[];
   loading: boolean;
+  error?: boolean;
+  onRetry?: () => void;
   emptyText: string;
   sortBy?: string;
   order?: 'asc' | 'desc';
@@ -327,7 +335,7 @@ interface ShellProps<T> {
   footer?: ReactNode;
 }
 
-function TableShell<T>({ columns, rowKey, rows, loading, emptyText, sortBy, order, onSort, footer }: ShellProps<T>) {
+function TableShell<T>({ columns, rowKey, rows, loading, error, onRetry, emptyText, sortBy, order, onSort, footer }: ShellProps<T>) {
   const colKey = useMemo(() => (c: Column<T>, i: number) => c.key ?? String(c.dataIndex) ?? i, []);
 
   return (
@@ -365,12 +373,33 @@ function TableShell<T>({ columns, rowKey, rows, loading, emptyText, sortBy, orde
           </TableRow>
         </TableHeader>
         <TableBody>
-          {loading ? (
+          {error ? (
             <TableRow className="hover:bg-transparent">
-              <TableCell colSpan={columns.length} className="h-40 text-center">
-                <Loader2 className="mx-auto h-6 w-6 animate-spin text-primary/70" />
+              <TableCell colSpan={columns.length} className="h-44 text-center">
+                <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
+                    <AlertCircle className="h-6 w-6 text-destructive" />
+                  </div>
+                  <span className="text-sm">Gagal memuat data.</span>
+                  {onRetry && (
+                    <Button variant="outline" size="sm" onClick={onRetry}>
+                      <RefreshCw className="h-3.5 w-3.5" /> Coba lagi
+                    </Button>
+                  )}
+                </div>
               </TableCell>
             </TableRow>
+          ) : loading ? (
+            // Skeleton: beberapa baris berkedip agar tak terasa "kosong" saat memuat.
+            Array.from({ length: 5 }).map((_, ri) => (
+              <TableRow key={`sk-${ri}`} className="hover:bg-transparent">
+                {columns.map((col, ci) => (
+                  <TableCell key={ci} className={alignClass[col.align ?? 'left']}>
+                    <div className="h-4 w-full max-w-[10rem] animate-pulse rounded bg-muted" />
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))
           ) : rows.length === 0 ? (
             <TableRow className="hover:bg-transparent">
               <TableCell colSpan={columns.length} className="h-44 text-center">

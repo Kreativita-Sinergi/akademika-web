@@ -14,6 +14,7 @@ import { GraduationCap, LogOut, Menu as MenuIcon, X, Search, ChevronDown, Sun, M
 import { useAuthStore } from '../../store/auth';
 import NotificationBell from './NotificationBell';
 import CommandPalette from '../organisms/CommandPalette';
+import ErrorBoundary from '../organisms/ErrorBoundary';
 import { menuForRole, roleLabel } from '@/data/menu';
 
 const OPEN_KEY = 'akademika-sidebar-open';
@@ -214,7 +215,9 @@ export default function Layout() {
         </header>
 
         <main className="min-w-0 flex-1 p-4 sm:p-6">
-          <Outlet />
+          <ErrorBoundary key={location.pathname}>
+            <Outlet />
+          </ErrorBoundary>
         </main>
       </div>
 
