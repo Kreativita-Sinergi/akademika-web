@@ -52,7 +52,7 @@ export function InternshipsPage() {
         columns={[
           { key: 'student', label: 'Mahasiswa', render: (i) => (i.student ? `${i.student.nim} — ${i.student.name}` : '-') },
           { key: 'type', label: 'Jenis', render: (i) => i.type.toUpperCase() },
-          { key: 'company_name', label: 'Tempat/Instansi' },
+          { key: 'company_name', label: 'Tempat/Instansi', sortable: true },
           { key: 'supervisor', label: 'Pembimbing', render: (i) => i.supervisor?.name ?? '-' },
           { key: 'status', label: 'Status', render: (i) => <Badge value={i.status} /> },
           { key: 'letter_grade', label: 'Nilai', render: (i) => i.letter_grade || '-' },
@@ -168,7 +168,7 @@ export function ThesesPage() {
         endpoint="/theses"
         columns={[
           { key: 'student', label: 'Mahasiswa', render: (t) => (t.student ? `${t.student.nim} — ${t.student.name}` : '-') },
-          { key: 'title', label: 'Judul' },
+          { key: 'title', label: 'Judul', sortable: true },
           { key: 'supervisor1', label: 'Pembimbing 1', render: (t) => t.supervisor1?.name ?? '-' },
           { key: 'status', label: 'Status', render: (t) => <Badge value={t.status} /> },
           { key: 'letter_grade', label: 'Nilai', render: (t) => t.letter_grade || '-' },
@@ -260,7 +260,7 @@ export function GraduationsPage() {
         title="Periode Wisuda"
         endpoint="/graduations/ceremonies"
         columns={[
-          { key: 'name', label: 'Nama' },
+          { key: 'name', label: 'Nama', sortable: true },
           { key: 'ceremony_date', label: 'Tanggal', render: (c) => formatDate(c.ceremony_date) },
           { key: 'location', label: 'Lokasi' },
           { key: 'fee', label: 'Biaya', render: (c) => formatRupiah(c.fee) },
@@ -382,11 +382,11 @@ export function AlumniPage() {
       canDelete={false}
       columns={[
         { key: 'student', label: 'Nama', render: (a) => (a.student ? `${a.student.nim} — ${a.student.name}` : '-') },
-        { key: 'graduation_year', label: 'Tahun Lulus' },
+        { key: 'graduation_year', label: 'Tahun Lulus', sortable: true },
         { key: 'degree', label: 'Jenjang' },
         { key: 'ipk', label: 'IPK', render: (a) => a.ipk.toFixed(2) },
         { key: 'job_status', label: 'Status Kerja', render: (a) => <Badge value={a.job_status} /> },
-        { key: 'company_name', label: 'Perusahaan/Instansi' },
+        { key: 'company_name', label: 'Perusahaan/Instansi', sortable: true },
       ]}
       fields={[
         {

@@ -16,8 +16,8 @@ export function WavesPage() {
       title="Gelombang PMB"
       endpoint="/admission/waves"
       columns={[
-        { key: 'name', label: 'Nama' },
-        { key: 'entry_year', label: 'Tahun Masuk' },
+        { key: 'name', label: 'Nama', sortable: true },
+        { key: 'entry_year', label: 'Tahun Masuk', sortable: true },
         { key: 'start_date', label: 'Mulai', render: (w) => formatDate(w.start_date) },
         { key: 'end_date', label: 'Selesai', render: (w) => formatDate(w.end_date) },
         { key: 'registration_fee', label: 'Biaya Daftar', render: (w) => formatRupiah(w.registration_fee) },
@@ -60,7 +60,7 @@ export function ExamSchedulesPage() {
       title="Jadwal Ujian Masuk"
       endpoint="/admission/exam-schedules"
       columns={[
-        { key: 'name', label: 'Sesi' },
+        { key: 'name', label: 'Sesi', sortable: true },
         { key: 'admission_wave', label: 'Gelombang', render: (e) => e.admission_wave?.name ?? '-' },
         { key: 'exam_date', label: 'Tanggal', render: (e) => formatDate(e.exam_date) },
         { key: 'time', label: 'Jam', render: (e) => `${e.start_time} - ${e.end_time}` },
@@ -150,8 +150,8 @@ export function ApplicantsPage() {
         canEdit={false}
         canDelete={false}
         columns={[
-          { key: 'registration_number', label: 'No. Daftar' },
-          { key: 'name', label: 'Nama' },
+          { key: 'registration_number', label: 'No. Daftar', sortable: true },
+          { key: 'name', label: 'Nama', sortable: true },
           { key: 'first_choice', label: 'Pilihan 1', render: (a) => a.first_choice?.name ?? '-' },
           { key: 'admission_wave', label: 'Gelombang', render: (a) => a.admission_wave?.name ?? '-' },
           { key: 'payment_status', label: 'Bayar', render: (a) => <Badge value={a.payment_status} /> },

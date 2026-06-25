@@ -20,9 +20,9 @@ export function BooksPage() {
       title="Katalog Buku"
       endpoint="/library/books"
       columns={[
-        { key: 'title', label: 'Judul' },
-        { key: 'author', label: 'Pengarang' },
-        { key: 'category', label: 'Kategori' },
+        { key: 'title', label: 'Judul', sortable: true },
+        { key: 'author', label: 'Pengarang', sortable: true },
+        { key: 'category', label: 'Kategori', sortable: true },
         { key: 'shelf_location', label: 'Rak' },
         {
           key: 'available_copies',

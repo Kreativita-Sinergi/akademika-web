@@ -52,9 +52,9 @@ export function OrganizationsPage() {
       title="Organisasi Kemahasiswaan"
       endpoint="/organizations"
       columns={[
-        { key: 'name', label: 'Nama' },
+        { key: 'name', label: 'Nama', sortable: true },
         { key: 'type', label: 'Jenis', render: (o) => o.type.toUpperCase() },
-        { key: 'period', label: 'Periode' },
+        { key: 'period', label: 'Periode', sortable: true },
         { key: 'advisor', label: 'Pembina', render: (o) => o.advisor?.name ?? '-' },
         { key: 'is_active', label: 'Status', render: (o) => <Badge value={o.is_active ? 'terdaftar' : 'keluar'} /> },
       ]}

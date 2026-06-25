@@ -53,7 +53,7 @@ export function QuestionsPage() {
       columns={[
         { key: 'question', label: 'Soal', render: (q) => <span className="line-clamp-2 max-w-md">{q.question}</span> },
         { key: 'correct_option', label: 'Kunci', render: (q) => <b>{q.correct_option}</b> },
-        { key: 'points', label: 'Poin' },
+        { key: 'points', label: 'Poin', sortable: true },
       ]}
         fields={[
           { name: 'admission_wave_id', label: 'Gelombang', type: 'select', options: waves, required: true },

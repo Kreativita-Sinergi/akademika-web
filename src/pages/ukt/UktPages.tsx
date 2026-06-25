@@ -14,7 +14,7 @@ export function UktGroupsPage() {
       title="Golongan UKT"
       endpoint="/ukt/groups"
       columns={[
-        { key: 'group_number', label: 'Golongan' },
+        { key: 'group_number', label: 'Golongan', sortable: true },
         { key: 'study_program', label: 'Prodi', render: (u) => u.study_program?.name ?? '-' },
         { key: 'amount_per_semester', label: 'Nominal/Semester', render: (u) => formatRupiah(u.amount_per_semester) },
         { key: 'description', label: 'Keterangan' },
@@ -82,7 +82,7 @@ export function InvoicesPage() {
         canEdit={false}
         canDelete={false}
         columns={[
-          { key: 'invoice_number', label: 'No. Tagihan' },
+          { key: 'invoice_number', label: 'No. Tagihan', sortable: true },
           { key: 'student', label: 'Mahasiswa', render: (i) => (i.student ? `${i.student.nim} — ${i.student.name}` : '-') },
           { key: 'academic_year', label: 'Tahun', render: (i) => (i.academic_year ? `${i.academic_year.name} ${i.academic_year.semester}` : '-') },
           { key: 'amount', label: 'Tagihan', render: (i) => formatRupiah(i.amount) },

@@ -29,9 +29,9 @@ export function ScholarshipsPage() {
       title="Program Beasiswa"
       endpoint="/scholarships"
       columns={[
-        { key: 'name', label: 'Nama' },
+        { key: 'name', label: 'Nama', sortable: true },
         { key: 'provider', label: 'Penyedia' },
-        { key: 'quota', label: 'Kuota' },
+        { key: 'quota', label: 'Kuota', sortable: true },
         { key: 'min_gpa', label: 'Min IPK', render: (s) => (s.min_gpa > 0 ? s.min_gpa.toFixed(2) : '-') },
         { key: 'amount_per_student', label: 'Nominal', render: (s) => formatRupiah(s.amount_per_student) },
         {
