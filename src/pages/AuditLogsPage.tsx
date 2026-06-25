@@ -1,4 +1,3 @@
-import { Tag } from 'antd';
 import ResourcePage from '../components/crud/ResourcePage';
 import { Badge } from '../components/ui';
 
@@ -14,10 +13,10 @@ interface AuditLog {
 }
 
 const methodColor: Record<string, string> = {
-  POST: 'green',
-  PUT: 'blue',
-  PATCH: 'gold',
-  DELETE: 'red',
+  POST: 'bg-emerald-100 text-emerald-700',
+  PUT: 'bg-blue-100 text-blue-700',
+  PATCH: 'bg-amber-100 text-amber-700',
+  DELETE: 'bg-red-100 text-red-700',
 };
 
 // Jejak audit: semua request yang mengubah data, untuk akuntabilitas kampus.
@@ -39,7 +38,11 @@ export default function AuditLogsPage() {
         {
           key: 'method',
           label: 'Aksi',
-          render: (log) => <Tag color={methodColor[log.method] ?? 'default'} bordered={false}>{log.method}</Tag>,
+          render: (log) => (
+            <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${methodColor[log.method] ?? 'bg-muted text-muted-foreground'}`}>
+              {log.method}
+            </span>
+          ),
         },
         { key: 'path', label: 'Endpoint', render: (log) => <code className="text-xs">{log.path}</code> },
         {

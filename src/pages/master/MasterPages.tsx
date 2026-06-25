@@ -9,9 +9,9 @@ export function FacultiesPage() {
       title="Fakultas"
       endpoint="/master/faculties"
       columns={[
-        { key: 'code', label: 'Kode' },
-        { key: 'name', label: 'Nama' },
-        { key: 'dean_name', label: 'Dekan' },
+        { key: 'code', label: 'Kode', sortable: true },
+        { key: 'name', label: 'Nama', sortable: true },
+        { key: 'dean_name', label: 'Dekan', sortable: true },
       ]}
       fields={[
         { name: 'code', label: 'Kode', type: 'text', required: true },
@@ -29,11 +29,11 @@ export function ProgramsPage() {
       title="Program Studi"
       endpoint="/master/programs"
       columns={[
-        { key: 'code', label: 'Kode' },
-        { key: 'name', label: 'Nama' },
-        { key: 'degree', label: 'Jenjang' },
+        { key: 'code', label: 'Kode', sortable: true },
+        { key: 'name', label: 'Nama', sortable: true },
+        { key: 'degree', label: 'Jenjang', sortable: true },
         { key: 'faculty', label: 'Fakultas', render: (p) => p.faculty?.name ?? '-' },
-        { key: 'accreditation', label: 'Akreditasi' },
+        { key: 'accreditation', label: 'Akreditasi', sortable: true },
         {
           key: 'is_teacher_education',
           label: 'Keguruan',
@@ -74,8 +74,8 @@ export function AcademicYearsPage() {
       title="Tahun Akademik"
       endpoint="/master/academic-years"
       columns={[
-        { key: 'name', label: 'Tahun' },
-        { key: 'semester', label: 'Semester' },
+        { key: 'name', label: 'Tahun', sortable: true },
+        { key: 'semester', label: 'Semester', sortable: true },
         {
           key: 'is_active',
           label: 'Status',
@@ -120,11 +120,11 @@ export function RoomsPage() {
       title="Ruangan"
       endpoint="/master/rooms"
       columns={[
-        { key: 'code', label: 'Kode' },
-        { key: 'name', label: 'Nama' },
-        { key: 'building', label: 'Gedung' },
-        { key: 'floor', label: 'Lantai' },
-        { key: 'capacity', label: 'Kapasitas' },
+        { key: 'code', label: 'Kode', sortable: true },
+        { key: 'name', label: 'Nama', sortable: true },
+        { key: 'building', label: 'Gedung', sortable: true },
+        { key: 'floor', label: 'Lantai', sortable: true },
+        { key: 'capacity', label: 'Kapasitas', sortable: true },
         { key: 'type', label: 'Tipe' },
       ]}
       fields={[
@@ -155,10 +155,10 @@ export function CoursesPage() {
       title="Mata Kuliah"
       endpoint="/master/courses"
       columns={[
-        { key: 'code', label: 'Kode' },
-        { key: 'name', label: 'Nama' },
-        { key: 'sks', label: 'SKS' },
-        { key: 'semester_number', label: 'Semester (Paket)' },
+        { key: 'code', label: 'Kode', sortable: true },
+        { key: 'name', label: 'Nama', sortable: true },
+        { key: 'sks', label: 'SKS', sortable: true },
+        { key: 'semester_number', label: 'Semester (Paket)', sortable: true },
         { key: 'study_program', label: 'Prodi', render: (c) => c.study_program?.name ?? '-' },
       ]}
       fields={[
@@ -189,10 +189,10 @@ export function ClassGroupsPage() {
       title="Rombel / Kelas"
       endpoint="/master/class-groups"
       columns={[
-        { key: 'code', label: 'Kode' },
+        { key: 'code', label: 'Kode', sortable: true },
         { key: 'study_program', label: 'Prodi', render: (g) => g.study_program?.name ?? '-' },
-        { key: 'entry_year', label: 'Angkatan' },
-        { key: 'current_semester', label: 'Semester' },
+        { key: 'entry_year', label: 'Angkatan', sortable: true },
+        { key: 'current_semester', label: 'Semester', sortable: true },
         { key: 'advisor', label: 'Dosen Wali', render: (g) => g.advisor?.name ?? '-' },
       ]}
       fields={[

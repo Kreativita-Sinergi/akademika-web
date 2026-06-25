@@ -6,7 +6,11 @@ import { useOptions } from '../hooks/useList';
 import { createResource, errorMessage, listResource, patchResource } from '../api/crud';
 import { downloadFile } from '../api/download';
 import api from '../lib/axios';
-import { Badge, Button, EmptyState, Field, Modal, formatDate, formatRupiah, inputClass } from '../components/ui';
+import { Badge, Button, EmptyState, Field, Modal, formatDate, formatRupiah } from '../components/ui';
+import { DataTable, type Column } from '@/components/ui/data-table';
+import { Segmented } from '@/components/ui/segmented';
+import { Card, CardContent } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
 import type { AcademicYear, ApiResponse, Scholarship, ScholarshipApplication } from '../types';
 
 const toIso = (v: unknown) => (v ? new Date(String(v)).toISOString() : undefined);
@@ -114,71 +118,62 @@ export function ScholarshipApplicationsPage() {
     }
   };
 
+  const columns: Column<ScholarshipApplication>[] = [
+    { title: 'Mahasiswa', key: 'mhs', render: (_, a) => a.student_name },
+    { title: 'Program', key: 'prog', render: (_, a) => a.scholarship?.name ?? '-' },
+    { title: 'IPK', key: 'gpa', render: (_, a) => a.gpa.toFixed(2) },
+    { title: 'Alasan', key: 'reason', className: 'max-w-xs truncate text-muted-foreground', render: (_, a) => a.reason },
+    { title: 'Status', key: 'status', render: (_, a) => <Badge value={statusVariant[a.status] ?? a.status} /> },
+    {
+      title: '',
+      key: 'act',
+      align: 'right',
+      render: (_, a) => (
+        <>
+          {a.status === 'diajukan' && (
+            <Button variant="secondary" onClick={() => { setReviewing(a); setNote(''); }}>Tinjau</Button>
+          )}
+          {a.status === 'diterima' && (
+            <Button variant="secondary" onClick={() => void downloadFile(`/scholarships/applications/${a.id}/decree/pdf`, `sk-beasiswa-${a.student_name}.pdf`)}>Unduh SK</Button>
+          )}
+        </>
+      ),
+    },
+  ];
+
   return (
     <div>
-      <h1 className="mb-4 flex items-center gap-2 text-xl font-semibold">
-        <Award size={20} className="text-primary-600" /> Seleksi Beasiswa
+      <h1 className="mb-4 flex items-center gap-2 text-xl font-bold tracking-tight">
+        <Award size={20} className="text-primary" /> Seleksi Beasiswa
       </h1>
-      <div className="mb-3 flex gap-2 text-sm">
-        {['', 'diajukan', 'diterima', 'ditolak'].map((s) => (
-          <button
-            key={s}
-            onClick={() => setStatusFilter(s)}
-            className={`rounded-lg px-3 py-1.5 ${statusFilter === s ? 'bg-primary-600 text-white' : 'bg-slate-100 text-slate-600'}`}
-          >
-            {s === '' ? 'Semua' : s.charAt(0).toUpperCase() + s.slice(1)}
-          </button>
-        ))}
+      <div className="mb-3">
+        <Segmented
+          value={statusFilter}
+          onChange={setStatusFilter}
+          options={[
+            { value: '', label: 'Semua' },
+            { value: 'diajukan', label: 'Diajukan' },
+            { value: 'diterima', label: 'Diterima' },
+            { value: 'ditolak', label: 'Ditolak' },
+          ]}
+        />
       </div>
 
-      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
-        <table className="w-full text-sm">
-          <thead className="bg-slate-50 text-left text-slate-500">
-            <tr>
-              <th className="px-4 py-3">Mahasiswa</th>
-              <th className="px-4 py-3">Program</th>
-              <th className="px-4 py-3">IPK</th>
-              <th className="px-4 py-3">Alasan</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {apps.map((a) => (
-              <tr key={a.id} className="border-t border-slate-100">
-                <td className="px-4 py-3">{a.student_name}</td>
-                <td className="px-4 py-3">{a.scholarship?.name ?? '-'}</td>
-                <td className="px-4 py-3">{a.gpa.toFixed(2)}</td>
-                <td className="max-w-xs truncate px-4 py-3 text-slate-500">{a.reason}</td>
-                <td className="px-4 py-3"><Badge value={statusVariant[a.status] ?? a.status} /></td>
-                <td className="px-4 py-3 text-right">
-                  {a.status === 'diajukan' && (
-                    <Button variant="secondary" onClick={() => { setReviewing(a); setNote(''); }}>Tinjau</Button>
-                  )}
-                  {a.status === 'diterima' && (
-                    <Button variant="secondary" onClick={() => void downloadFile(`/scholarships/applications/${a.id}/decree/pdf`, `sk-beasiswa-${a.student_name}.pdf`)}>Unduh SK</Button>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {!loading && apps.length === 0 && <EmptyState message="Belum ada pengajuan" />}
-      </div>
+      <DataTable<ScholarshipApplication> columns={columns} rowKey={(a) => a.id} data={apps} loading={loading} emptyText="Belum ada pengajuan" />
 
       <Modal open={!!reviewing} title={`Tinjau Pengajuan — ${reviewing?.student_name ?? ''}`} onClose={() => setReviewing(null)}>
         {reviewing && (
           <div className="space-y-3">
-            <div className="rounded-lg bg-slate-50 p-3 text-sm">
-              <p><span className="text-slate-400">Program:</span> {reviewing.scholarship?.name}</p>
-              <p><span className="text-slate-400">IPK:</span> {reviewing.gpa.toFixed(2)} · <span className="text-slate-400">Syarat min:</span> {reviewing.scholarship?.min_gpa?.toFixed(2) ?? '-'}</p>
-              <p className="mt-1 whitespace-pre-line text-slate-600">{reviewing.reason}</p>
+            <div className="rounded-lg bg-muted p-3 text-sm">
+              <p><span className="text-muted-foreground">Program:</span> {reviewing.scholarship?.name}</p>
+              <p><span className="text-muted-foreground">IPK:</span> {reviewing.gpa.toFixed(2)} · <span className="text-muted-foreground">Syarat min:</span> {reviewing.scholarship?.min_gpa?.toFixed(2) ?? '-'}</p>
+              <p className="mt-1 whitespace-pre-line text-foreground">{reviewing.reason}</p>
               {reviewing.document_url && (
-                <a href={reviewing.document_url} target="_blank" rel="noreferrer" className="text-primary-600 underline">Lihat dokumen</a>
+                <a href={reviewing.document_url} target="_blank" rel="noreferrer" className="text-primary underline">Lihat dokumen</a>
               )}
             </div>
             <Field label="Catatan (opsional)">
-              <textarea className={inputClass} rows={2} value={note} onChange={(e) => setNote(e.target.value)} />
+              <Textarea rows={2} value={note} onChange={(e) => setNote(e.target.value)} />
             </Field>
             <div className="flex justify-end gap-2 pt-2">
               <Button variant="danger" disabled={saving} onClick={() => void decide(reviewing, 'ditolak')}>Tolak</Button>
@@ -226,51 +221,55 @@ export function MyScholarshipPage() {
 
   return (
     <div>
-      <h1 className="mb-4 flex items-center gap-2 text-xl font-semibold">
-        <GraduationCap size={20} className="text-primary-600" /> Beasiswa
+      <h1 className="mb-4 flex items-center gap-2 text-xl font-bold tracking-tight">
+        <GraduationCap size={20} className="text-primary" /> Beasiswa
       </h1>
 
-      <h2 className="mb-2 text-sm font-semibold text-slate-500">Program Tersedia</h2>
+      <h2 className="mb-2 text-sm font-semibold text-muted-foreground">Program Tersedia</h2>
       <div className="mb-6 grid gap-3 sm:grid-cols-2">
         {programs.length === 0 && <EmptyState message="Belum ada program beasiswa terbuka" />}
         {programs.map((s) => {
           const applied = appliedIds.has(s.id);
           return (
-            <div key={s.id} className="rounded-xl border border-slate-200 bg-white p-4">
-              <div className="mb-1 flex items-start justify-between gap-2">
-                <h3 className="font-semibold leading-tight">{s.name}</h3>
-                <span className="shrink-0 text-sm font-semibold text-primary-600">{formatRupiah(s.amount_per_student)}</span>
-              </div>
-              <p className="text-xs text-slate-400">{s.provider}</p>
-              {s.description && <p className="mt-2 text-sm text-slate-600">{s.description}</p>}
-              <p className="mt-2 text-xs text-slate-400">
-                Kuota {s.quota} · {s.min_gpa > 0 ? `min IPK ${s.min_gpa.toFixed(2)}` : 'tanpa syarat IPK'} · tutup {formatDate(s.close_date)}
-              </p>
-              <div className="mt-3">
-                {applied ? (
-                  <Badge value="diajukan" />
-                ) : (
-                  <Button onClick={() => { setApplying(s); setReason(''); }}>
-                    <Send size={14} className="mr-1 inline" /> Ajukan
-                  </Button>
-                )}
-              </div>
-            </div>
+            <Card key={s.id}>
+              <CardContent className="p-4">
+                <div className="mb-1 flex items-start justify-between gap-2">
+                  <h3 className="font-semibold leading-tight">{s.name}</h3>
+                  <span className="shrink-0 text-sm font-semibold text-primary">{formatRupiah(s.amount_per_student)}</span>
+                </div>
+                <p className="text-xs text-muted-foreground">{s.provider}</p>
+                {s.description && <p className="mt-2 text-sm text-muted-foreground">{s.description}</p>}
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Kuota {s.quota} · {s.min_gpa > 0 ? `min IPK ${s.min_gpa.toFixed(2)}` : 'tanpa syarat IPK'} · tutup {formatDate(s.close_date)}
+                </p>
+                <div className="mt-3">
+                  {applied ? (
+                    <Badge value="diajukan" />
+                  ) : (
+                    <Button onClick={() => { setApplying(s); setReason(''); }}>
+                      <Send size={14} className="mr-1 inline" /> Ajukan
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
           );
         })}
       </div>
 
-      <h2 className="mb-2 text-sm font-semibold text-slate-500">Pengajuan Saya</h2>
+      <h2 className="mb-2 text-sm font-semibold text-muted-foreground">Pengajuan Saya</h2>
       <div className="space-y-2">
         {apps.length === 0 && <EmptyState message="Belum ada pengajuan" />}
         {apps.map((a) => (
-          <div key={a.id} className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4">
-            <div>
-              <p className="font-medium">{a.scholarship?.name ?? '-'}</p>
-              {a.review_note && <p className="text-xs text-slate-400">Catatan: {a.review_note}</p>}
-            </div>
-            <Badge value={statusVariant[a.status] ?? a.status} />
-          </div>
+          <Card key={a.id}>
+            <CardContent className="flex items-center justify-between p-4">
+              <div>
+                <p className="font-medium">{a.scholarship?.name ?? '-'}</p>
+                {a.review_note && <p className="text-xs text-muted-foreground">Catatan: {a.review_note}</p>}
+              </div>
+              <Badge value={statusVariant[a.status] ?? a.status} />
+            </CardContent>
+          </Card>
         ))}
       </div>
 
@@ -284,7 +283,7 @@ export function MyScholarshipPage() {
               </div>
             )}
             <Field label="Alasan / Motivasi">
-              <textarea className={inputClass} rows={4} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Jelaskan alasan Anda mengajukan beasiswa ini" />
+              <Textarea rows={4} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Jelaskan alasan Anda mengajukan beasiswa ini" />
             </Field>
             <div className="flex justify-end gap-2 pt-2">
               <Button variant="secondary" onClick={() => setApplying(null)}>Batal</Button>

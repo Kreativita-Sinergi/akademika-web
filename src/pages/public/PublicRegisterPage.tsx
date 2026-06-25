@@ -84,13 +84,13 @@ export default function PublicRegisterPage() {
   if (result) {
     return (
       <PublicShell title="Pendaftaran Berhasil 🎉">
-        <p className="mb-2 text-slate-600">
+        <p className="mb-2 text-muted-foreground">
           Terima kasih, <b>{result.name}</b>. Simpan nomor pendaftaran Anda:
         </p>
-        <div className="mb-4 rounded-xl bg-primary-50 py-4 text-center text-2xl font-bold tracking-wider text-primary-700">
+        <div className="mb-4 rounded-xl bg-primary/5 py-4 text-center text-2xl font-bold tracking-wider text-primary">
           {result.registration_number}
         </div>
-        <p className="mb-4 text-sm text-slate-500">
+        <p className="mb-4 text-sm text-muted-foreground">
           Selesaikan pembayaran biaya pendaftaran, lalu pantau status & jadwal ujian Anda di halaman{' '}
           <b>Cek Status</b> menggunakan nomor pendaftaran + tanggal lahir.
         </p>
@@ -170,7 +170,7 @@ export default function PublicRegisterPage() {
         </Field>
         <div className="sm:col-span-2">
           {selectedWave && (
-            <p className="mb-2 text-sm text-slate-500">
+            <p className="mb-2 text-sm text-muted-foreground">
               Biaya pendaftaran: <b>{formatRupiah(selectedWave.registration_fee)}</b> — instruksi pembayaran akan
               diinformasikan panitia setelah Anda mendaftar.
             </p>
@@ -178,7 +178,7 @@ export default function PublicRegisterPage() {
           <Button type="submit" disabled={loading || info.waves.length === 0} className="w-full">
             {loading ? 'Mendaftar...' : 'Daftar Sekarang'}
           </Button>
-          <Link to={`/status/${campusCode}`} className="mt-3 flex items-center justify-center gap-1 text-sm text-primary-600 hover:underline">
+          <Link to={`/status/${campusCode}`} className="mt-3 flex items-center justify-center gap-1 text-sm text-primary hover:underline">
             <Search size={14} /> Sudah daftar? Cek status pendaftaran
           </Link>
         </div>
@@ -190,9 +190,9 @@ export default function PublicRegisterPage() {
 export function PublicShell({ title, children, wide }: { title: string; children: React.ReactNode; wide?: boolean }) {
   return (
     <div className="flex min-h-screen items-start justify-center bg-gradient-to-br from-primary-50 to-slate-100 p-4 py-10">
-      <div className={`w-full rounded-2xl bg-white p-8 shadow-lg ${wide ? 'max-w-2xl' : 'max-w-md'}`}>
+      <div className={`w-full rounded-2xl bg-card p-8 shadow-lg ${wide ? 'max-w-2xl' : 'max-w-md'}`}>
         <div className="mb-6 flex flex-col items-center text-center">
-          <GraduationCap className="mb-2 text-primary-600" size={36} />
+          <GraduationCap className="mb-2 text-primary" size={36} />
           <h1 className="text-xl font-bold tracking-tight">{title}</h1>
         </div>
         {children}

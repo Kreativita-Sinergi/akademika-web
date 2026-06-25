@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Card, Timeline, Flex, Typography } from 'antd';
 import { CalendarDays } from 'lucide-react';
 import ResourcePage from '../components/crud/ResourcePage';
 import { useOptions } from '../hooks/useList';
 import api from '../lib/axios';
 import { Badge, EmptyState, formatDate } from '../components/ui';
+import { Card, CardContent } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 import type { AcademicEvent, AcademicYear, ApiResponse } from '../types';
 
 const categoryOptions = [
@@ -78,31 +79,38 @@ export function AcademicCalendarViewPage() {
   }, []);
 
   return (
-    <div>
-      <Typography.Title level={4} style={{ marginTop: 0 }}>
-        <CalendarDays size={20} className="mr-2 inline text-primary-600" /> Kalender Akademik
-      </Typography.Title>
+    <div className="space-y-4">
+      <h1 className="flex items-center gap-2 text-xl font-bold tracking-tight">
+        <CalendarDays size={20} className="text-primary" /> Kalender Akademik
+      </h1>
       {!loading && items.length === 0 && <EmptyState message="Belum ada agenda mendatang" />}
-      <Card>
-        <Timeline
-          items={items.map((e) => ({
-            color: e.is_holiday ? 'red' : 'blue',
-            children: (
-              <div>
-                <Flex align="center" gap={8} wrap>
-                  <span className="font-semibold">{e.title}</span>
-                  <Badge value={categoryLabel[e.category] ?? e.category} />
-                </Flex>
-                <div className="text-xs text-slate-400">
-                  {formatDate(e.start_date)}
-                  {e.end_date && e.end_date.slice(0, 10) !== e.start_date.slice(0, 10) ? ` — ${formatDate(e.end_date)}` : ''}
-                </div>
-                {e.description && <div className="mt-1 whitespace-pre-line text-sm text-slate-600">{e.description}</div>}
-              </div>
-            ),
-          }))}
-        />
-      </Card>
+      {items.length > 0 && (
+        <Card>
+          <CardContent className="p-5">
+            <ol className="relative space-y-5 border-l border-border pl-6">
+              {items.map((e) => (
+                <li key={e.id} className="relative">
+                  <span
+                    className={cn(
+                      'absolute -left-[26px] top-1.5 h-3 w-3 rounded-full ring-4 ring-background',
+                      e.is_holiday ? 'bg-red-500' : 'bg-primary',
+                    )}
+                  />
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-semibold">{e.title}</span>
+                    <Badge value={categoryLabel[e.category] ?? e.category} />
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {formatDate(e.start_date)}
+                    {e.end_date && e.end_date.slice(0, 10) !== e.start_date.slice(0, 10) ? ` — ${formatDate(e.end_date)}` : ''}
+                  </div>
+                  {e.description && <div className="mt-1 whitespace-pre-line text-sm text-muted-foreground">{e.description}</div>}
+                </li>
+              ))}
+            </ol>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

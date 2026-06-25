@@ -7,6 +7,10 @@ import { createResource, errorMessage, listResource, patchResource } from '../ap
 import { downloadFile } from '../api/download';
 import api from '../lib/axios';
 import { Badge, Button, EmptyState, Field, Modal, formatDate, formatRupiah, inputClass } from '../components/ui';
+import { DataTable, type Column } from '@/components/ui/data-table';
+import { Segmented } from '@/components/ui/segmented';
+import { Combobox } from '@/components/ui/combobox';
+import { Card, CardContent } from '@/components/ui/card';
 import type { ApiResponse, Book, BookLoan, Lecturer, Student } from '../types';
 
 // Admin: katalog buku perpustakaan.
@@ -136,77 +140,63 @@ export function LoansPage() {
 
   const borrowValid = bookId && dueDate && (borrowerType === 'student' ? studentId : lecturerId);
 
+  const columns: Column<BookLoan>[] = [
+    { title: 'Buku', key: 'book', render: (_, l) => l.book?.title ?? '-' },
+    {
+      title: 'Peminjam',
+      key: 'borrower',
+      render: (_, l) => (
+        <span>
+          {l.borrower_name}
+          <span className="ml-1 text-xs text-muted-foreground">({l.borrower_type === 'student' ? 'Mhs' : 'Dosen'})</span>
+        </span>
+      ),
+    },
+    { title: 'Pinjam', key: 'loan_date', render: (_, l) => formatDate(l.loan_date) },
+    { title: 'Jatuh Tempo', key: 'due_date', render: (_, l) => formatDate(l.due_date) },
+    { title: 'Status', key: 'status', render: (_, l) => <Badge value={loanStatusVariant[l.status] ?? l.status} /> },
+    { title: 'Denda', key: 'fine', render: (_, l) => (l.fine > 0 ? formatRupiah(l.fine) : '-') },
+    {
+      title: '',
+      key: 'act',
+      align: 'right',
+      render: (_, l) =>
+        l.status !== 'dikembalikan' ? (
+          <Button variant="secondary" onClick={() => void returnBook(l)}>
+            <RotateCcw size={14} className="mr-1 inline" /> Kembalikan
+          </Button>
+        ) : null,
+    },
+  ];
+
   return (
     <div>
       <div className="mb-4 flex items-center justify-between gap-2">
-        <h1 className="flex items-center gap-2 text-xl font-semibold">
-          <Library size={20} className="text-primary-600" /> Sirkulasi Perpustakaan
+        <h1 className="flex items-center gap-2 text-xl font-bold tracking-tight">
+          <Library size={20} className="text-primary" /> Sirkulasi Perpustakaan
         </h1>
         <Button onClick={() => setShowBorrow(true)}>Pinjam Buku</Button>
       </div>
 
-      <div className="mb-3 flex gap-2 text-sm">
-        {['', 'dipinjam', 'terlambat', 'dikembalikan'].map((s) => (
-          <button
-            key={s}
-            onClick={() => setStatusFilter(s)}
-            className={`rounded-lg px-3 py-1.5 ${statusFilter === s ? 'bg-primary-600 text-white' : 'bg-slate-100 text-slate-600'}`}
-          >
-            {s === '' ? 'Semua' : s.charAt(0).toUpperCase() + s.slice(1)}
-          </button>
-        ))}
+      <div className="mb-3">
+        <Segmented
+          value={statusFilter}
+          onChange={setStatusFilter}
+          options={[
+            { value: '', label: 'Semua' },
+            { value: 'dipinjam', label: 'Dipinjam' },
+            { value: 'terlambat', label: 'Terlambat' },
+            { value: 'dikembalikan', label: 'Dikembalikan' },
+          ]}
+        />
       </div>
 
-      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
-        <table className="w-full text-sm">
-          <thead className="bg-slate-50 text-left text-slate-500">
-            <tr>
-              <th className="px-4 py-3">Buku</th>
-              <th className="px-4 py-3">Peminjam</th>
-              <th className="px-4 py-3">Pinjam</th>
-              <th className="px-4 py-3">Jatuh Tempo</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3">Denda</th>
-              <th className="px-4 py-3"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {loans.map((l) => (
-              <tr key={l.id} className="border-t border-slate-100">
-                <td className="px-4 py-3">{l.book?.title ?? '-'}</td>
-                <td className="px-4 py-3">
-                  {l.borrower_name}
-                  <span className="ml-1 text-xs text-slate-400">({l.borrower_type === 'student' ? 'Mhs' : 'Dosen'})</span>
-                </td>
-                <td className="px-4 py-3">{formatDate(l.loan_date)}</td>
-                <td className="px-4 py-3">{formatDate(l.due_date)}</td>
-                <td className="px-4 py-3"><Badge value={loanStatusVariant[l.status] ?? l.status} /></td>
-                <td className="px-4 py-3">{l.fine > 0 ? formatRupiah(l.fine) : '-'}</td>
-                <td className="px-4 py-3 text-right">
-                  {l.status !== 'dikembalikan' && (
-                    <Button variant="secondary" onClick={() => void returnBook(l)}>
-                      <RotateCcw size={14} className="mr-1 inline" /> Kembalikan
-                    </Button>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {!loading && loans.length === 0 && <EmptyState message="Belum ada peminjaman" />}
-      </div>
+      <DataTable<BookLoan> columns={columns} rowKey={(l) => l.id} data={loans} loading={loading} emptyText="Belum ada peminjaman" />
 
       <Modal open={showBorrow} title="Pinjam Buku" onClose={() => setShowBorrow(false)}>
         <div className="space-y-3">
           <Field label="Buku">
-            <select className={inputClass} value={bookId} onChange={(e) => setBookId(e.target.value)}>
-              <option value="">— pilih buku —</option>
-              {books.map((o) => (
-                <option key={o.value} value={o.value} disabled={o.raw.available_copies === 0}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
+            <Combobox options={books} value={bookId} onChange={setBookId} allowClear placeholder="— pilih buku —" />
           </Field>
           <Field label="Tipe Peminjam">
             <select
@@ -220,21 +210,11 @@ export function LoansPage() {
           </Field>
           {borrowerType === 'student' ? (
             <Field label="Mahasiswa">
-              <select className={inputClass} value={studentId} onChange={(e) => setStudentId(e.target.value)}>
-                <option value="">— pilih mahasiswa —</option>
-                {students.map((o) => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
-                ))}
-              </select>
+              <Combobox options={students} value={studentId} onChange={setStudentId} allowClear placeholder="— pilih mahasiswa —" />
             </Field>
           ) : (
             <Field label="Dosen">
-              <select className={inputClass} value={lecturerId} onChange={(e) => setLecturerId(e.target.value)}>
-                <option value="">— pilih dosen —</option>
-                {lecturers.map((o) => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
-                ))}
-              </select>
+              <Combobox options={lecturers} value={lecturerId} onChange={setLecturerId} allowClear placeholder="— pilih dosen —" />
             </Field>
           )}
           <Field label="Jatuh Tempo">
@@ -264,39 +244,40 @@ export function MyLibraryPage() {
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
-        <h1 className="flex items-center gap-2 text-xl font-semibold">
-          <Library size={20} className="text-primary-600" /> Perpustakaan
+        <h1 className="flex items-center gap-2 text-xl font-bold tracking-tight">
+          <Library size={20} className="text-primary" /> Perpustakaan
         </h1>
         <Button variant="secondary" onClick={() => void downloadFile('/library/my-card/pdf', 'kartu-perpustakaan.pdf')}>
           Cetak Kartu Anggota
         </Button>
       </div>
-      <div className="mb-4 flex gap-2 text-sm">
-        {(['loans', 'catalog'] as const).map((v) => (
-          <button
-            key={v}
-            onClick={() => setTab(v)}
-            className={`rounded-lg px-3 py-1.5 ${tab === v ? 'bg-primary-600 text-white' : 'bg-slate-100 text-slate-600'}`}
-          >
-            {v === 'loans' ? 'Pinjaman Saya' : 'Katalog'}
-          </button>
-        ))}
+      <div className="mb-4">
+        <Segmented
+          value={tab}
+          onChange={setTab}
+          options={[
+            { value: 'loans', label: 'Pinjaman Saya' },
+            { value: 'catalog', label: 'Katalog' },
+          ]}
+        />
       </div>
 
       {tab === 'loans' && (
         <div className="space-y-2">
           {loans.length === 0 && <EmptyState message="Belum ada peminjaman" />}
           {loans.map((l) => (
-            <div key={l.id} className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4">
-              <div>
-                <p className="font-medium">{l.book?.title ?? '-'}</p>
-                <p className="text-xs text-slate-400">Jatuh tempo {formatDate(l.due_date)}</p>
-              </div>
-              <div className="text-right">
-                <Badge value={loanStatusVariant[l.status] ?? l.status} />
-                {l.fine > 0 && <p className="mt-1 text-xs text-rose-500">Denda {formatRupiah(l.fine)}</p>}
-              </div>
-            </div>
+            <Card key={l.id}>
+              <CardContent className="flex items-center justify-between p-4">
+                <div>
+                  <p className="font-medium">{l.book?.title ?? '-'}</p>
+                  <p className="text-xs text-muted-foreground">Jatuh tempo {formatDate(l.due_date)}</p>
+                </div>
+                <div className="text-right">
+                  <Badge value={loanStatusVariant[l.status] ?? l.status} />
+                  {l.fine > 0 && <p className="mt-1 text-xs text-rose-500">Denda {formatRupiah(l.fine)}</p>}
+                </div>
+              </CardContent>
+            </Card>
           ))}
         </div>
       )}
@@ -305,19 +286,21 @@ export function MyLibraryPage() {
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {books.length === 0 && <EmptyState message="Katalog masih kosong" />}
           {books.map((b) => (
-            <div key={b.id} className="rounded-xl border border-slate-200 bg-white p-4">
-              <div className="mb-1 flex items-center gap-2">
-                <BookOpen size={16} className="text-primary-600" />
-                <h2 className="font-semibold leading-tight">{b.title}</h2>
-              </div>
-              <p className="text-sm text-slate-500">{b.author}</p>
-              <p className="mt-2 text-xs text-slate-400">
-                {b.category} · Rak {b.shelf_location || '-'} ·{' '}
-                <span className={b.available_copies === 0 ? 'text-rose-500' : 'text-emerald-600'}>
-                  {b.available_copies > 0 ? `tersedia ${b.available_copies}` : 'habis'}
-                </span>
-              </p>
-            </div>
+            <Card key={b.id}>
+              <CardContent className="p-4">
+                <div className="mb-1 flex items-center gap-2">
+                  <BookOpen size={16} className="text-primary" />
+                  <h2 className="font-semibold leading-tight">{b.title}</h2>
+                </div>
+                <p className="text-sm text-muted-foreground">{b.author}</p>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {b.category} · Rak {b.shelf_location || '-'} ·{' '}
+                  <span className={b.available_copies === 0 ? 'text-rose-500' : 'text-emerald-600'}>
+                    {b.available_copies > 0 ? `tersedia ${b.available_copies}` : 'habis'}
+                  </span>
+                </p>
+              </CardContent>
+            </Card>
           ))}
         </div>
       )}

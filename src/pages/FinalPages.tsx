@@ -302,7 +302,7 @@ export function GraduationsPage() {
 
       <Modal open={registerOpen} title="Daftarkan Peserta Wisuda" onClose={() => setRegisterOpen(false)}>
         <div className="space-y-3">
-          <p className="text-sm text-slate-500">Syarat otomatis dicek: tugas akhir lulus & seluruh tagihan UKT lunas.</p>
+          <p className="text-sm text-muted-foreground">Syarat otomatis dicek: tugas akhir lulus & seluruh tagihan UKT lunas.</p>
           <Field label="Periode Wisuda">
             <select className={inputClass} value={regForm.ceremony} onChange={(e) => setRegForm({ ...regForm, ceremony: e.target.value })}>
               <option value="">— pilih —</option>

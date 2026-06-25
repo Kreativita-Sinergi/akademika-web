@@ -2,19 +2,20 @@ import { useEffect, useState } from 'react';
 import { Activity } from 'lucide-react';
 import { useOptions } from '../hooks/useList';
 import { getResource } from '../api/crud';
-import { EmptyState, dayNames } from '../components/ui';
+import { dayNames, inputClass } from '../components/ui';
+import { DataTable, type Column } from '@/components/ui/data-table';
 import type { AcademicYear, LecturerRecapRow } from '../types';
 
 function Bar({ value, danger }: { value: number; danger?: boolean }) {
   return (
     <div className="flex items-center gap-2">
-      <div className="h-2 w-24 rounded-full bg-slate-100">
+      <div className="h-2 w-24 overflow-hidden rounded-full bg-muted">
         <div
-          className={`h-2 rounded-full ${danger && value < 75 ? 'bg-amber-500' : 'bg-primary-500'}`}
+          className={`h-2 rounded-full ${danger && value < 75 ? 'bg-amber-500' : 'bg-primary'}`}
           style={{ width: `${Math.min(100, value)}%` }}
         />
       </div>
-      <span className="text-xs font-medium text-slate-600">{value.toFixed(0)}%</span>
+      <span className="text-xs font-medium text-muted-foreground">{value.toFixed(0)}%</span>
     </div>
   );
 }
@@ -35,18 +36,31 @@ export default function LecturerRealizationPage() {
       .finally(() => setLoading(false));
   }, [yearId]);
 
+  const columns: Column<LecturerRecapRow>[] = [
+    { title: 'Mata Kuliah', key: 'course', className: 'font-medium', render: (_, r) => r.schedule.course?.name ?? '-' },
+    { title: 'Dosen', key: 'lecturer', render: (_, r) => r.schedule.lecturer?.name ?? '-' },
+    {
+      title: 'Kelas / Jadwal',
+      key: 'class',
+      render: (_, r) => (
+        <span className="text-muted-foreground">
+          {r.schedule.class_group?.code ?? '-'} · {dayNames[r.schedule.day_of_week]} {r.schedule.start_time}
+        </span>
+      ),
+    },
+    { title: 'Pertemuan', key: 'meet', render: (_, r) => `${r.meetings_held}/${r.target_meetings}` },
+    { title: 'Realisasi (/16)', key: 'real', render: (_, r) => <Bar value={r.realization_pct} danger /> },
+    { title: 'Kehadiran Dosen', key: 'pres', render: (_, r) => <Bar value={r.presence_pct} /> },
+  ];
+
   return (
     <div>
-      <h1 className="mb-4 flex items-center gap-2 text-xl font-semibold">
-        <Activity size={20} className="text-primary-600" /> Realisasi Perkuliahan & Kehadiran Dosen
+      <h1 className="mb-4 flex items-center gap-2 text-xl font-bold tracking-tight">
+        <Activity size={20} className="text-primary" /> Realisasi Perkuliahan & Kehadiran Dosen
       </h1>
 
       <div className="mb-4 max-w-xs">
-        <select
-          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-          value={yearId}
-          onChange={(e) => setYearId(e.target.value)}
-        >
+        <select className={inputClass} value={yearId} onChange={(e) => setYearId(e.target.value)}>
           <option value="">Semua tahun akademik</option>
           {years.map((o) => (
             <option key={o.value} value={o.value}>{o.label}</option>
@@ -54,35 +68,13 @@ export default function LecturerRealizationPage() {
         </select>
       </div>
 
-      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
-        <table className="w-full text-sm">
-          <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
-            <tr>
-              <th className="px-4 py-3">Mata Kuliah</th>
-              <th className="px-4 py-3">Dosen</th>
-              <th className="px-4 py-3">Kelas / Jadwal</th>
-              <th className="px-4 py-3">Pertemuan</th>
-              <th className="px-4 py-3">Realisasi (/16)</th>
-              <th className="px-4 py-3">Kehadiran Dosen</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r) => (
-              <tr key={r.schedule.id} className="border-t border-slate-100">
-                <td className="px-4 py-3 font-medium">{r.schedule.course?.name ?? '-'}</td>
-                <td className="px-4 py-3">{r.schedule.lecturer?.name ?? '-'}</td>
-                <td className="px-4 py-3 text-slate-500">
-                  {r.schedule.class_group?.code ?? '-'} · {dayNames[r.schedule.day_of_week]} {r.schedule.start_time}
-                </td>
-                <td className="px-4 py-3">{r.meetings_held}/{r.target_meetings}</td>
-                <td className="px-4 py-3"><Bar value={r.realization_pct} danger /></td>
-                <td className="px-4 py-3"><Bar value={r.presence_pct} /></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {!loading && rows.length === 0 && <EmptyState message="Belum ada jadwal/realisasi" />}
-      </div>
+      <DataTable<LecturerRecapRow>
+        columns={columns}
+        rowKey={(r) => r.schedule.id}
+        data={rows}
+        loading={loading}
+        emptyText="Belum ada jadwal/realisasi"
+      />
     </div>
   );
 }

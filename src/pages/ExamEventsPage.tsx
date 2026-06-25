@@ -5,6 +5,7 @@ import { useOptions } from '../hooks/useList';
 import api from '../lib/axios';
 import { downloadFile } from '../api/download';
 import { Badge, Button, EmptyState, Field, inputClass, formatDate } from '../components/ui';
+import { DataTable } from '@/components/ui/data-table';
 import type { AcademicYear, ApiResponse, CourseExam, Room, Schedule } from '../types';
 
 function scheduleLabel(s: Schedule): string {
@@ -87,7 +88,7 @@ export function MyExamCardPage() {
   return (
     <div>
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-        <h1 className="text-xl font-semibold">Kartu Ujian</h1>
+        <h1 className="text-xl font-bold tracking-tight">Kartu Ujian</h1>
         <Button
           variant="secondary"
           disabled={items.length === 0}
@@ -117,30 +118,21 @@ export function MyExamCardPage() {
         </Field>
       </div>
 
-      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs uppercase text-slate-500">
-              <th className="px-4 py-3 font-medium">Mata Kuliah</th>
-              <th className="px-4 py-3 font-medium">Tanggal</th>
-              <th className="px-4 py-3 font-medium">Waktu</th>
-              <th className="px-4 py-3 font-medium">Ruang</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((e) => (
-              <tr key={e.id} className="border-b border-slate-100 last:border-0">
-                <td className="px-4 py-3">{e.schedule?.course?.name ?? '-'}</td>
-                <td className="px-4 py-3">{formatDate(e.date)}</td>
-                <td className="px-4 py-3">{e.start_time}–{e.end_time}</td>
-                <td className="px-4 py-3">{e.room?.name ?? '-'}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {loaded && items.length === 0 && <EmptyState message="Belum ada jadwal ujian" />}
-        {!loaded && <EmptyState message="Pilih tahun akademik & jenis ujian" />}
-      </div>
+      {!loaded ? (
+        <EmptyState message="Pilih tahun akademik & jenis ujian" />
+      ) : (
+        <DataTable<CourseExam>
+          columns={[
+            { title: 'Mata Kuliah', key: 'course', render: (_, e) => e.schedule?.course?.name ?? '-' },
+            { title: 'Tanggal', key: 'date', render: (_, e) => formatDate(e.date) },
+            { title: 'Waktu', key: 'time', render: (_, e) => `${e.start_time}–${e.end_time}` },
+            { title: 'Ruang', key: 'room', render: (_, e) => e.room?.name ?? '-' },
+          ]}
+          rowKey={(e) => e.id}
+          data={items}
+          emptyText="Belum ada jadwal ujian"
+        />
+      )}
     </div>
   );
 }

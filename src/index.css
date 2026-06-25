@@ -1,13 +1,140 @@
 @import "tailwindcss";
+@import "tw-animate-css";
 
-@theme {
-  --color-primary-50: #eef4ff;
-  --color-primary-100: #dde7ff;
-  --color-primary-500: #4263eb;
-  --color-primary-600: #3b5bdb;
-  --color-primary-700: #364fc7;
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme inline {
+  /* Font sama dengan Loka Kasir */
+  --font-sans: 'Plus Jakarta Sans', sans-serif;
+
+  /* Token semantik shadcn */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Skala biru Loka untuk kelas legacy (primary-50..700) */
+  --color-primary-50: #eff4fe;
+  --color-primary-100: #dbe6fd;
+  --color-primary-500: #3b6ef0;
+  --color-primary-600: #1b5ae8;
+  --color-primary-700: #1648b8;
+
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
 }
 
-body {
-  @apply bg-slate-50 text-slate-800 antialiased;
+:root {
+  --background: hsl(0 0% 100%);
+  --foreground: hsl(222 47% 13%);
+
+  --card: hsl(0 0% 100%);
+  --card-foreground: hsl(222 47% 13%);
+
+  --popover: hsl(0 0% 100%);
+  --popover-foreground: hsl(222 47% 13%);
+
+  /* Biru Loka — #1B5AE8 */
+  --primary: hsl(222 82% 51%);
+  --primary-foreground: hsl(0 0% 100%);
+
+  --secondary: hsl(215 30% 95%);
+  --secondary-foreground: hsl(222 47% 18%);
+
+  --muted: hsl(215 30% 96%);
+  --muted-foreground: hsl(215 16% 47%);
+
+  /* Aksen biru lembut Loka — #EBF0FD */
+  --accent: hsl(223 80% 96%);
+  --accent-foreground: hsl(222 82% 45%);
+
+  --destructive: hsl(0 72% 51%);
+  --destructive-foreground: hsl(0 0% 100%);
+
+  --border: hsl(214 32% 91%);
+  --input: hsl(214 32% 89%);
+  --ring: hsl(222 82% 51%);
+
+  --radius: 0.75rem;
+
+  /* Latar aplikasi: abu kebiruan sangat halus */
+  --app-bg: hsl(216 33% 97%);
+}
+
+.dark {
+  --background: hsl(222 47% 11%);
+  --foreground: hsl(210 40% 96%);
+
+  --card: hsl(222 44% 13%);
+  --card-foreground: hsl(210 40% 96%);
+
+  --popover: hsl(222 44% 13%);
+  --popover-foreground: hsl(210 40% 96%);
+
+  /* Biru Loka dicerahkan agar kontras di latar gelap */
+  --primary: hsl(222 90% 64%);
+  --primary-foreground: hsl(222 47% 11%);
+
+  --secondary: hsl(217 33% 20%);
+  --secondary-foreground: hsl(210 40% 96%);
+
+  --muted: hsl(217 33% 18%);
+  --muted-foreground: hsl(215 20% 66%);
+
+  --accent: hsl(217 33% 22%);
+  --accent-foreground: hsl(210 40% 96%);
+
+  --destructive: hsl(0 63% 52%);
+  --destructive-foreground: hsl(0 0% 100%);
+
+  --border: hsl(217 33% 22%);
+  --input: hsl(217 33% 24%);
+  --ring: hsl(222 90% 64%);
+
+  --app-bg: hsl(222 47% 8%);
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+  body {
+    color: var(--foreground);
+    background-color: var(--app-bg);
+    /* Glow biru/ungu lembut di sudut */
+    background-image:
+      radial-gradient(45rem 45rem at 105% -5%, hsl(222 82% 51% / 0.07), transparent 60%),
+      radial-gradient(40rem 40rem at -5% 8%, hsl(255 80% 62% / 0.06), transparent 55%);
+    background-attachment: fixed;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    font-feature-settings: 'rlig' 1, 'calt' 1;
+  }
+}
+
+/* Gradien brand */
+.bg-brand-gradient {
+  background-image: linear-gradient(135deg, hsl(222 82% 52%), hsl(250 78% 60%));
+}
+.text-gradient {
+  background: linear-gradient(135deg, hsl(222 82% 52%), hsl(255 78% 62%));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }

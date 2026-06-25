@@ -4,6 +4,11 @@ import { LogOut, PauseCircle } from 'lucide-react';
 import { createResource, errorMessage, listResource, patchResource } from '../api/crud';
 import api from '../lib/axios';
 import { Badge, Button, EmptyState, Field, Modal, formatDate, inputClass } from '../components/ui';
+import { DataTable, type Column } from '@/components/ui/data-table';
+import { Segmented } from '@/components/ui/segmented';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import type { ApiResponse, LeaveRequest } from '../types';
 
 const typeLabel: Record<string, string> = {
@@ -22,12 +27,18 @@ const statusVariant: Record<string, string> = {
 export function LeaveRequestsPage() {
   const [items, setItems] = useState<LeaveRequest[]>([]);
   const [statusFilter, setStatusFilter] = useState('diajukan');
+  const [loading, setLoading] = useState(false);
   const [reviewing, setReviewing] = useState<LeaveRequest | null>(null);
   const [note, setNote] = useState('');
 
   const refresh = async () => {
-    const res = await listResource<LeaveRequest>('/leave-requests', { status: statusFilter || undefined });
-    setItems(res.data ?? []);
+    setLoading(true);
+    try {
+      const res = await listResource<LeaveRequest>('/leave-requests', { status: statusFilter || undefined });
+      setItems(res.data ?? []);
+    } finally {
+      setLoading(false);
+    }
   };
   useEffect(() => {
     void refresh();
@@ -46,54 +57,53 @@ export function LeaveRequestsPage() {
     }
   };
 
+  const columns: Column<LeaveRequest>[] = [
+    { title: 'Mahasiswa', key: 'mhs', render: (_, l) => l.student_name },
+    { title: 'Jenis', key: 'type', render: (_, l) => typeLabel[l.type] ?? l.type },
+    { title: 'Alasan', key: 'reason', className: 'max-w-sm truncate text-muted-foreground', render: (_, l) => l.reason },
+    { title: 'Status', key: 'status', render: (_, l) => <Badge value={statusVariant[l.status] ?? l.status} /> },
+    {
+      title: '',
+      key: 'act',
+      align: 'right',
+      render: (_, l) =>
+        l.status === 'diajukan' ? (
+          <Button variant="secondary" onClick={() => { setReviewing(l); setNote(''); }}>Proses</Button>
+        ) : null,
+    },
+  ];
+
   return (
     <div>
-      <h1 className="mb-4 flex items-center gap-2 text-xl font-semibold">
-        <PauseCircle size={20} className="text-primary-600" /> Cuti & Pengunduran Diri
+      <h1 className="mb-4 flex items-center gap-2 text-xl font-bold tracking-tight">
+        <PauseCircle size={20} className="text-primary" /> Cuti & Pengunduran Diri
       </h1>
-      <div className="mb-3 flex gap-2 text-sm">
-        {['diajukan', 'disetujui', 'ditolak', ''].map((s) => (
-          <button key={s} onClick={() => setStatusFilter(s)}
-            className={`rounded-lg px-3 py-1.5 ${statusFilter === s ? 'bg-primary-600 text-white' : 'bg-slate-100 text-slate-600'}`}>
-            {s === '' ? 'Semua' : s.charAt(0).toUpperCase() + s.slice(1)}
-          </button>
-        ))}
+      <div className="mb-3">
+        <Segmented
+          value={statusFilter}
+          onChange={setStatusFilter}
+          options={[
+            { value: 'diajukan', label: 'Diajukan' },
+            { value: 'disetujui', label: 'Disetujui' },
+            { value: 'ditolak', label: 'Ditolak' },
+            { value: '', label: 'Semua' },
+          ]}
+        />
       </div>
-      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
-        <table className="w-full text-sm">
-          <thead className="bg-slate-50 text-left text-slate-500">
-            <tr><th className="px-4 py-3">Mahasiswa</th><th className="px-4 py-3">Jenis</th><th className="px-4 py-3">Alasan</th><th className="px-4 py-3">Status</th><th className="px-4 py-3"></th></tr>
-          </thead>
-          <tbody>
-            {items.map((l) => (
-              <tr key={l.id} className="border-t border-slate-100">
-                <td className="px-4 py-3">{l.student_name}</td>
-                <td className="px-4 py-3">{typeLabel[l.type] ?? l.type}</td>
-                <td className="max-w-sm truncate px-4 py-3 text-slate-500">{l.reason}</td>
-                <td className="px-4 py-3"><Badge value={statusVariant[l.status] ?? l.status} /></td>
-                <td className="px-4 py-3 text-right">
-                  {l.status === 'diajukan' && (
-                    <Button variant="secondary" onClick={() => { setReviewing(l); setNote(''); }}>Proses</Button>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {items.length === 0 && <EmptyState message="Tidak ada permohonan" />}
-      </div>
+
+      <DataTable<LeaveRequest> columns={columns} rowKey={(l) => l.id} data={items} loading={loading} emptyText="Tidak ada permohonan" />
 
       <Modal open={!!reviewing} title={`Proses — ${reviewing?.student_name ?? ''}`} onClose={() => setReviewing(null)}>
         {reviewing && (
           <div className="space-y-3">
-            <div className="rounded-lg bg-slate-50 p-3 text-sm">
+            <div className="rounded-lg bg-muted p-3 text-sm">
               <p className="font-medium">{typeLabel[reviewing.type] ?? reviewing.type}</p>
-              <p className="mt-1 whitespace-pre-line text-slate-600">{reviewing.reason}</p>
+              <p className="mt-1 whitespace-pre-line text-muted-foreground">{reviewing.reason}</p>
             </div>
             {reviewing.type === 'mengundurkan_diri' && (
               <p className="rounded-lg bg-amber-50 p-2 text-xs text-amber-700">Menyetujui akan mengubah status mahasiswa menjadi "keluar".</p>
             )}
-            <Field label="Catatan"><input className={inputClass} value={note} onChange={(e) => setNote(e.target.value)} /></Field>
+            <Field label="Catatan"><Input value={note} onChange={(e) => setNote(e.target.value)} /></Field>
             <div className="flex justify-end gap-2 pt-2">
               <Button variant="danger" onClick={() => void decide('ditolak')}>Tolak</Button>
               <Button onClick={() => void decide('disetujui')}>Setujui</Button>
@@ -132,20 +142,22 @@ export function MyLeavePage() {
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
-        <h1 className="flex items-center gap-2 text-xl font-semibold"><LogOut size={20} className="text-primary-600" /> Cuti & Status Studi</h1>
+        <h1 className="flex items-center gap-2 text-xl font-bold tracking-tight"><LogOut size={20} className="text-primary" /> Cuti & Status Studi</h1>
         <Button onClick={() => setOpen(true)}>Ajukan Permohonan</Button>
       </div>
       <div className="space-y-2">
         {items.length === 0 && <EmptyState message="Belum ada permohonan" />}
         {items.map((l) => (
-          <div key={l.id} className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4">
-            <div>
-              <p className="font-medium">{typeLabel[l.type] ?? l.type}</p>
-              <p className="text-xs text-slate-400">{formatDate(l.created_at ?? l.decided_at ?? '')}</p>
-              {l.review_note && <p className="text-xs text-slate-400">Catatan: {l.review_note}</p>}
-            </div>
-            <Badge value={statusVariant[l.status] ?? l.status} />
-          </div>
+          <Card key={l.id}>
+            <CardContent className="flex items-center justify-between p-4">
+              <div>
+                <p className="font-medium">{typeLabel[l.type] ?? l.type}</p>
+                <p className="text-xs text-muted-foreground">{formatDate(l.created_at ?? l.decided_at ?? '')}</p>
+                {l.review_note && <p className="text-xs text-muted-foreground">Catatan: {l.review_note}</p>}
+              </div>
+              <Badge value={statusVariant[l.status] ?? l.status} />
+            </CardContent>
+          </Card>
         ))}
       </div>
 
@@ -158,7 +170,7 @@ export function MyLeavePage() {
               <option value="mengundurkan_diri">Pengunduran Diri</option>
             </select>
           </Field>
-          <Field label="Alasan"><textarea className={inputClass} rows={4} value={reason} onChange={(e) => setReason(e.target.value)} /></Field>
+          <Field label="Alasan"><Textarea rows={4} value={reason} onChange={(e) => setReason(e.target.value)} /></Field>
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="secondary" onClick={() => setOpen(false)}>Batal</Button>
             <Button disabled={!reason} onClick={() => void submit()}>Kirim</Button>

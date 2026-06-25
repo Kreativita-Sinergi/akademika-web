@@ -2,7 +2,10 @@ import { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { createResource, errorMessage, listResource } from '../api/crud';
 import { useOptions } from '../hooks/useList';
-import { Button, EmptyState, Field, inputClass } from '../components/ui';
+import { Button, Field } from '../components/ui';
+import { Input } from '@/components/ui/input';
+import { Combobox } from '@/components/ui/combobox';
+import { DataTable, type Column } from '@/components/ui/data-table';
 import type { AcademicYear, Course, Grade, Student } from '../types';
 
 interface GradeRow {
@@ -30,7 +33,6 @@ export default function GradesPage() {
     if (!courseId || !yearId || !selectedCourse) return;
     setLoading(true);
     try {
-      // Ambil mahasiswa prodi tsb + nilai yang sudah ada.
       const [studentsRes, gradesRes] = await Promise.all([
         listResource<Student>('/students', {
           study_program_id: selectedCourse.study_program_id,
@@ -62,7 +64,7 @@ export default function GradesPage() {
     void load();
   }, [load]);
 
-  const saveRow = async (row: GradeRow, index: number) => {
+  const saveRow = async (row: GradeRow) => {
     try {
       const saved = await createResource<Grade>('/grades', {
         student_id: row.student.id,
@@ -73,7 +75,7 @@ export default function GradesPage() {
         final_score: Number(row.final || 0),
       });
       setRows((prev) =>
-        prev.map((r, i) => (i === index ? { ...r, letter: saved.letter_grade, total: saved.total_score } : r)),
+        prev.map((r) => (r.student.id === row.student.id ? { ...r, letter: saved.letter_grade, total: saved.total_score } : r)),
       );
       toast.success(`Nilai ${row.student.name}: ${saved.letter_grade}`);
     } catch (err) {
@@ -81,77 +83,59 @@ export default function GradesPage() {
     }
   };
 
-  const update = (index: number, key: 'assignment' | 'mid' | 'final', value: string) => {
-    setRows((prev) => prev.map((r, i) => (i === index ? { ...r, [key]: value } : r)));
+  const update = (id: string, key: 'assignment' | 'mid' | 'final', value: string) => {
+    setRows((prev) => prev.map((r) => (r.student.id === id ? { ...r, [key]: value } : r)));
   };
+
+  const scoreCell = (key: 'assignment' | 'mid' | 'final') => (_: unknown, row: GradeRow) => (
+    <Input
+      type="number"
+      min={0}
+      max={100}
+      className="h-8 w-20"
+      value={row[key]}
+      onChange={(e) => update(row.student.id, key, e.target.value)}
+    />
+  );
+
+  const columns: Column<GradeRow>[] = [
+    { title: 'NIM', key: 'nim', render: (_, r) => r.student.nim },
+    { title: 'Nama', key: 'name', render: (_, r) => r.student.name },
+    { title: 'Tugas (30%)', key: 'assignment', render: scoreCell('assignment') },
+    { title: 'UTS (30%)', key: 'mid', render: scoreCell('mid') },
+    { title: 'UAS (40%)', key: 'final', render: scoreCell('final') },
+    { title: 'Total', key: 'total', render: (_, r) => (r.total != null ? r.total.toFixed(1) : '-') },
+    { title: 'Huruf', key: 'letter', className: 'font-semibold', render: (_, r) => r.letter ?? '-' },
+    {
+      title: '',
+      key: 'act',
+      align: 'right',
+      render: (_, r) => (
+        <Button variant="secondary" onClick={() => void saveRow(r)}>Simpan</Button>
+      ),
+    },
+  ];
 
   return (
     <div>
-      <h1 className="mb-4 text-xl font-semibold">Input Nilai</h1>
-      <div className="mb-4 grid max-w-2xl grid-cols-2 gap-3">
+      <h1 className="mb-4 text-xl font-bold tracking-tight">Input Nilai</h1>
+      <div className="mb-4 grid max-w-2xl grid-cols-1 gap-3 sm:grid-cols-2">
         <Field label="Mata Kuliah">
-          <select className={inputClass} value={courseId} onChange={(e) => setCourseId(e.target.value)}>
-            <option value="">— pilih —</option>
-            {courses.map((c) => (
-              <option key={c.value} value={c.value}>{c.label}</option>
-            ))}
-          </select>
+          <Combobox options={courses} value={courseId} onChange={setCourseId} allowClear placeholder="— pilih —" />
         </Field>
         <Field label="Tahun Akademik">
-          <select className={inputClass} value={yearId} onChange={(e) => setYearId(e.target.value)}>
-            <option value="">— pilih —</option>
-            {years.map((y) => (
-              <option key={y.value} value={y.value}>{y.label}</option>
-            ))}
-          </select>
+          <Combobox options={years} value={yearId} onChange={setYearId} allowClear placeholder="— pilih —" />
         </Field>
       </div>
 
       {courseId && yearId && (
-        <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b bg-slate-50 text-left text-xs uppercase text-slate-500">
-                <th className="px-4 py-3">NIM</th>
-                <th className="px-4 py-3">Nama</th>
-                <th className="px-4 py-3">Tugas (30%)</th>
-                <th className="px-4 py-3">UTS (30%)</th>
-                <th className="px-4 py-3">UAS (40%)</th>
-                <th className="px-4 py-3">Total</th>
-                <th className="px-4 py-3">Huruf</th>
-                <th className="px-4 py-3"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row, i) => (
-                <tr key={row.student.id} className="border-b last:border-0">
-                  <td className="px-4 py-2">{row.student.nim}</td>
-                  <td className="px-4 py-2">{row.student.name}</td>
-                  {(['assignment', 'mid', 'final'] as const).map((key) => (
-                    <td key={key} className="px-4 py-2">
-                      <input
-                        type="number"
-                        min={0}
-                        max={100}
-                        className="w-20 rounded border border-slate-300 px-2 py-1"
-                        value={row[key]}
-                        onChange={(e) => update(i, key, e.target.value)}
-                      />
-                    </td>
-                  ))}
-                  <td className="px-4 py-2">{row.total != null ? row.total.toFixed(1) : '-'}</td>
-                  <td className="px-4 py-2 font-semibold">{row.letter ?? '-'}</td>
-                  <td className="px-4 py-2 text-right">
-                    <Button variant="secondary" onClick={() => void saveRow(row, i)}>
-                      Simpan
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {!loading && rows.length === 0 && <EmptyState message="Tidak ada mahasiswa aktif di prodi mata kuliah ini" />}
-        </div>
+        <DataTable<GradeRow>
+          columns={columns}
+          rowKey={(r) => r.student.id}
+          data={rows}
+          loading={loading}
+          emptyText="Tidak ada mahasiswa aktif di prodi mata kuliah ini"
+        />
       )}
     </div>
   );

@@ -4,6 +4,11 @@ import { BookCheck, Plus, Trash2 } from 'lucide-react';
 import { useOptions } from '../hooks/useList';
 import { createResource, deleteResource, errorMessage, listResource, patchResource } from '../api/crud';
 import { Badge, Button, EmptyState, Field, Modal, inputClass } from '../components/ui';
+import { DataTable, type Column } from '@/components/ui/data-table';
+import { Segmented } from '@/components/ui/segmented';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import type { AcademicYear, BkdItem, BkdReport } from '../types';
 
 const categoryOptions = [
@@ -73,10 +78,28 @@ export function MyBkdPage() {
     }
   };
 
+  const itemColumns: Column<BkdItem>[] = [
+    { title: 'Kategori', key: 'cat', render: (_, it) => catLabel[it.category] ?? it.category },
+    { title: 'Deskripsi', key: 'desc', render: (_, it) => it.description },
+    { title: 'SKS', key: 'sks', dataIndex: 'sks', width: 80 },
+    {
+      title: '',
+      key: 'act',
+      align: 'right',
+      width: 56,
+      render: (_, it) =>
+        editable ? (
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => void removeItem(it)}>
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        ) : null,
+    },
+  ];
+
   return (
     <div>
-      <h1 className="mb-4 flex items-center gap-2 text-xl font-semibold">
-        <BookCheck size={20} className="text-primary-600" /> Beban Kerja Dosen (BKD)
+      <h1 className="mb-4 flex items-center gap-2 text-xl font-bold tracking-tight">
+        <BookCheck size={20} className="text-primary" /> Beban Kerja Dosen (BKD)
       </h1>
 
       <div className="mb-4 max-w-xs">
@@ -91,48 +114,19 @@ export function MyBkdPage() {
       {report && (
         <>
           <div className="mb-4 grid gap-3 sm:grid-cols-3">
-            <div className="rounded-xl border border-slate-200 bg-white p-4">
-              <p className="text-sm text-slate-500">Beban Mengajar (otomatis)</p>
-              <p className="text-2xl font-bold">{report.teaching_sks} SKS</p>
-            </div>
-            <div className="rounded-xl border border-slate-200 bg-white p-4">
-              <p className="text-sm text-slate-500">SKS Tridharma Lain</p>
-              <p className="text-2xl font-bold">{itemsSks(report)} SKS</p>
-            </div>
-            <div className="rounded-xl border border-slate-200 bg-white p-4">
-              <p className="text-sm text-slate-500">Status</p>
-              <div className="mt-1"><Badge value={statusVariant[report.status] ?? report.status} /></div>
-            </div>
+            <Card><CardContent className="p-4"><p className="text-sm text-muted-foreground">Beban Mengajar (otomatis)</p><p className="text-2xl font-bold tracking-tight">{report.teaching_sks} SKS</p></CardContent></Card>
+            <Card><CardContent className="p-4"><p className="text-sm text-muted-foreground">SKS Tridharma Lain</p><p className="text-2xl font-bold tracking-tight">{itemsSks(report)} SKS</p></CardContent></Card>
+            <Card><CardContent className="p-4"><p className="text-sm text-muted-foreground">Status</p><div className="mt-1"><Badge value={statusVariant[report.status] ?? report.status} /></div></CardContent></Card>
           </div>
 
           <div className="mb-3 flex items-center justify-between">
             <h2 className="font-semibold">Butir Kegiatan Tridharma</h2>
             {editable && <Button onClick={() => setOpen(true)}><Plus size={15} className="mr-1 inline" /> Tambah Butir</Button>}
           </div>
-          <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
-            <table className="w-full text-sm">
-              <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
-                <tr><th className="px-4 py-3">Kategori</th><th className="px-4 py-3">Deskripsi</th><th className="px-4 py-3">SKS</th><th className="px-4 py-3"></th></tr>
-              </thead>
-              <tbody>
-                {(report.items ?? []).map((it) => (
-                  <tr key={it.id} className="border-t border-slate-100">
-                    <td className="px-4 py-3">{catLabel[it.category] ?? it.category}</td>
-                    <td className="px-4 py-3">{it.description}</td>
-                    <td className="px-4 py-3">{it.sks}</td>
-                    <td className="px-4 py-3 text-right">
-                      {editable && (
-                        <button onClick={() => void removeItem(it)} className="rounded p-1.5 text-red-500 hover:bg-red-50"><Trash2 size={15} /></button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {(report.items ?? []).length === 0 && <EmptyState message="Belum ada butir kegiatan" />}
-          </div>
 
-          {report.review_note && <p className="mt-3 text-sm text-slate-500">Catatan penilai: {report.review_note}</p>}
+          <DataTable<BkdItem> columns={itemColumns} rowKey={(it) => it.id} data={report.items ?? []} emptyText="Belum ada butir kegiatan" />
+
+          {report.review_note && <p className="mt-3 text-sm text-muted-foreground">Catatan penilai: {report.review_note}</p>}
           {editable && (
             <div className="mt-4 flex justify-end">
               <Button onClick={() => void submit()}>Ajukan BKD</Button>
@@ -148,8 +142,8 @@ export function MyBkdPage() {
               {categoryOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
             </select>
           </Field>
-          <Field label="Deskripsi Kegiatan"><textarea className={inputClass} rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></Field>
-          <Field label="Bobot SKS"><input type="number" step="0.5" className={inputClass} value={form.sks} onChange={(e) => setForm({ ...form, sks: Number(e.target.value) })} /></Field>
+          <Field label="Deskripsi Kegiatan"><Textarea rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></Field>
+          <Field label="Bobot SKS"><Input type="number" step="0.5" value={form.sks} onChange={(e) => setForm({ ...form, sks: Number(e.target.value) })} /></Field>
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="secondary" onClick={() => setOpen(false)}>Batal</Button>
             <Button disabled={!form.description} onClick={() => void addItem()}>Tambah</Button>
@@ -164,12 +158,18 @@ export function MyBkdPage() {
 export function BkdReviewPage() {
   const [reports, setReports] = useState<BkdReport[]>([]);
   const [statusFilter, setStatusFilter] = useState('diajukan');
+  const [loading, setLoading] = useState(false);
   const [reviewing, setReviewing] = useState<BkdReport | null>(null);
   const [note, setNote] = useState('');
 
   const refresh = async () => {
-    const res = await listResource<BkdReport>('/bkd', { status: statusFilter || undefined });
-    setReports(res.data ?? []);
+    setLoading(true);
+    try {
+      const res = await listResource<BkdReport>('/bkd', { status: statusFilter || undefined });
+      setReports(res.data ?? []);
+    } finally {
+      setLoading(false);
+    }
   };
   useEffect(() => {
     void refresh();
@@ -188,57 +188,56 @@ export function BkdReviewPage() {
     }
   };
 
+  const columns: Column<BkdReport>[] = [
+    { title: 'Dosen', key: 'lec', render: (_, r) => r.lecturer?.name ?? '-' },
+    { title: 'Tahun', key: 'year', render: (_, r) => `${r.academic_year?.name ?? ''} ${r.academic_year?.semester ?? ''}` },
+    { title: 'SKS Ajar', key: 'teach', dataIndex: 'teaching_sks' },
+    { title: 'SKS Lain', key: 'other', render: (_, r) => itemsSks(r) },
+    { title: 'Status', key: 'status', render: (_, r) => <Badge value={statusVariant[r.status] ?? r.status} /> },
+    {
+      title: '',
+      key: 'act',
+      align: 'right',
+      render: (_, r) =>
+        r.status === 'diajukan' ? <Button variant="secondary" onClick={() => { setReviewing(r); setNote(''); }}>Tinjau</Button> : null,
+    },
+  ];
+
   return (
     <div>
-      <h1 className="mb-4 flex items-center gap-2 text-xl font-semibold">
-        <BookCheck size={20} className="text-primary-600" /> Pengesahan BKD
+      <h1 className="mb-4 flex items-center gap-2 text-xl font-bold tracking-tight">
+        <BookCheck size={20} className="text-primary" /> Pengesahan BKD
       </h1>
-      <div className="mb-3 flex gap-2 text-sm">
-        {['diajukan', 'disetujui', 'ditolak', ''].map((s) => (
-          <button key={s} onClick={() => setStatusFilter(s)}
-            className={`rounded-lg px-3 py-1.5 ${statusFilter === s ? 'bg-primary-600 text-white' : 'bg-slate-100 text-slate-600'}`}>
-            {s === '' ? 'Semua' : s.charAt(0).toUpperCase() + s.slice(1)}
-          </button>
-        ))}
+      <div className="mb-3">
+        <Segmented
+          value={statusFilter}
+          onChange={setStatusFilter}
+          options={[
+            { value: 'diajukan', label: 'Diajukan' },
+            { value: 'disetujui', label: 'Disetujui' },
+            { value: 'ditolak', label: 'Ditolak' },
+            { value: '', label: 'Semua' },
+          ]}
+        />
       </div>
-      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
-        <table className="w-full text-sm">
-          <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
-            <tr><th className="px-4 py-3">Dosen</th><th className="px-4 py-3">Tahun</th><th className="px-4 py-3">SKS Ajar</th><th className="px-4 py-3">SKS Lain</th><th className="px-4 py-3">Status</th><th className="px-4 py-3"></th></tr>
-          </thead>
-          <tbody>
-            {reports.map((r) => (
-              <tr key={r.id} className="border-t border-slate-100">
-                <td className="px-4 py-3">{r.lecturer?.name ?? '-'}</td>
-                <td className="px-4 py-3">{r.academic_year?.name} {r.academic_year?.semester}</td>
-                <td className="px-4 py-3">{r.teaching_sks}</td>
-                <td className="px-4 py-3">{itemsSks(r)}</td>
-                <td className="px-4 py-3"><Badge value={statusVariant[r.status] ?? r.status} /></td>
-                <td className="px-4 py-3 text-right">
-                  {r.status === 'diajukan' && <Button variant="secondary" onClick={() => { setReviewing(r); setNote(''); }}>Tinjau</Button>}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {reports.length === 0 && <EmptyState message="Tidak ada laporan" />}
-      </div>
+
+      <DataTable<BkdReport> columns={columns} rowKey={(r) => r.id} data={reports} loading={loading} emptyText="Tidak ada laporan" />
 
       <Modal open={!!reviewing} title={`Tinjau BKD — ${reviewing?.lecturer?.name ?? ''}`} onClose={() => setReviewing(null)} wide>
         {reviewing && (
           <div className="space-y-3">
-            <div className="rounded-lg bg-slate-50 p-3 text-sm">
+            <div className="rounded-lg bg-muted p-3 text-sm">
               <p>Beban mengajar: <b>{reviewing.teaching_sks} SKS</b> · Tridharma lain: <b>{itemsSks(reviewing)} SKS</b></p>
             </div>
             <div className="space-y-1">
               {(reviewing.items ?? []).map((it) => (
-                <div key={it.id} className="flex justify-between rounded border border-slate-100 px-3 py-2 text-sm">
+                <div key={it.id} className="flex justify-between rounded border border-border px-3 py-2 text-sm">
                   <span>{catLabel[it.category] ?? it.category}: {it.description}</span>
                   <span className="font-medium">{it.sks} SKS</span>
                 </div>
               ))}
             </div>
-            <Field label="Catatan"><input className={inputClass} value={note} onChange={(e) => setNote(e.target.value)} /></Field>
+            <Field label="Catatan"><Input value={note} onChange={(e) => setNote(e.target.value)} /></Field>
             <div className="flex justify-end gap-2 pt-2">
               <Button variant="danger" onClick={() => void decide('ditolak')}>Tolak</Button>
               <Button onClick={() => void decide('disetujui')}>Sahkan</Button>

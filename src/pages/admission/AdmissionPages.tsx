@@ -324,7 +324,7 @@ export function ApplicantsPage() {
           <Field label="Upload Berkas Daftar Ulang (PDF/scan)">
             <input
               type="file"
-              className="block w-full text-sm text-slate-500 file:mr-3 file:rounded-lg file:border-0 file:bg-primary-50 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-primary-700"
+              className="block w-full text-sm text-muted-foreground file:mr-3 file:rounded-lg file:border-0 file:bg-primary/5 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-primary"
               onChange={(e) => {
                 const file = e.target.files?.[0];
                 if (!file) return;
@@ -337,12 +337,12 @@ export function ApplicantsPage() {
               }}
             />
             {Boolean(form.docUrl) && (
-              <a href={String(form.docUrl)} target="_blank" rel="noreferrer" className="mt-1 block truncate text-xs text-primary-600 underline">
+              <a href={String(form.docUrl)} target="_blank" rel="noreferrer" className="mt-1 block truncate text-xs text-primary underline">
                 Lihat berkas terunggah
               </a>
             )}
           </Field>
-          <p className="text-xs text-slate-400">Status berubah menjadi "daftar ulang" jika lunas & berkas lengkap.</p>
+          <p className="text-xs text-muted-foreground">Status berubah menjadi "daftar ulang" jika lunas & berkas lengkap.</p>
           <div className="flex justify-end gap-2">
             <Button variant="secondary" onClick={close}>Batal</Button>
             <Button
@@ -368,7 +368,7 @@ export function ApplicantsPage() {
       {/* Enroll jadi mahasiswa */}
       <Modal open={action === 'enroll'} title={`Jadikan Mahasiswa — ${target?.name ?? ''}`} onClose={close}>
         <div className="space-y-3">
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-muted-foreground">
             NIM, akun login (password = nomor pendaftaran), tagihan UKT semester 1, dan riwayat semester akan dibuat otomatis.
           </p>
           <Field label="Tahun Akademik Masuk">

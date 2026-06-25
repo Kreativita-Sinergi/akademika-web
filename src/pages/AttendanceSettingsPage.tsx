@@ -63,20 +63,20 @@ export default function AttendanceSettingsPage() {
 
   return (
     <div className="max-w-xl">
-      <h1 className="mb-4 flex items-center gap-2 text-xl font-semibold">
-        <MapPin size={20} className="text-primary-600" /> Pengaturan Presensi (Geofence)
+      <h1 className="mb-4 flex items-center gap-2 text-xl font-bold tracking-tight">
+        <MapPin size={20} className="text-primary" /> Pengaturan Presensi (Geofence)
       </h1>
-      <div className="rounded-xl border border-slate-200 bg-white p-5">
-        <p className="mb-4 text-sm text-slate-500">
+      <div className="rounded-2xl border border-border/70 bg-card p-5 shadow-sm">
+        <p className="mb-4 text-sm text-muted-foreground">
           Tetapkan titik pusat & radius kampus. Presensi mandiri (QR) hanya diterima bila mahasiswa
           berada dalam radius ini. Isi <b>radius 0</b> untuk menonaktifkan validasi lokasi.
         </p>
         <div className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <Field label="Latitude"><input className={inputClass} value={lat} onChange={(e) => setLat(e.target.value)} placeholder="-6.2000000" /></Field>
             <Field label="Longitude"><input className={inputClass} value={lng} onChange={(e) => setLng(e.target.value)} placeholder="106.8000000" /></Field>
           </div>
-          <button onClick={useMyLocation} className="flex items-center gap-1 text-sm text-primary-600 hover:underline">
+          <button onClick={useMyLocation} className="flex items-center gap-1 text-sm text-primary hover:underline">
             <Crosshair size={14} /> Gunakan lokasi saya saat ini
           </button>
           <Field label="Radius (meter)">

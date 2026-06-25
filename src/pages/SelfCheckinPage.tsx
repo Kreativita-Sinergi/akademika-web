@@ -50,11 +50,11 @@ export default function SelfCheckinPage() {
       {(phase === 'locating' || phase === 'submitting') && (
         <>
           <Loader2 size={48} className="animate-spin text-primary-500" />
-          <p className="mt-4 text-slate-500">
+          <p className="mt-4 text-muted-foreground">
             {phase === 'locating' ? 'Mengambil lokasi Anda…' : 'Mengirim presensi…'}
           </p>
           {phase === 'locating' && (
-            <p className="mt-1 flex items-center gap-1 text-xs text-slate-400">
+            <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
               <MapPin size={12} /> Izinkan akses lokasi untuk verifikasi area kampus
             </p>
           )}

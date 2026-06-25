@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Badge, Popover, List, Button, Empty, Flex, Typography } from 'antd';
-import { BellOutlined } from '@ant-design/icons';
+import { Bell } from 'lucide-react';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import api from '../../lib/axios';
 import { formatDate } from '../../utils/format';
 import type { ApiResponse, AppNotification } from '../../types';
@@ -45,46 +47,51 @@ export default function NotificationBell() {
     if (n.link) navigate(n.link);
   };
 
-  const content = (
-    <div style={{ width: 320 }}>
-      <Flex justify="space-between" align="center" style={{ marginBottom: 8 }}>
-        <Typography.Text strong>Notifikasi</Typography.Text>
-        {unread > 0 && <Button type="link" size="small" onClick={() => void markAllRead()}>Tandai semua dibaca</Button>}
-      </Flex>
-      {items.length === 0 ? (
-        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Tidak ada notifikasi" />
-      ) : (
-        <List
-          size="small"
-          style={{ maxHeight: 360, overflowY: 'auto' }}
-          dataSource={items}
-          renderItem={(n) => (
-            <List.Item
-              onClick={() => void openItem(n)}
-              style={{ cursor: 'pointer', background: n.is_read ? undefined : 'rgba(66,99,235,0.06)', borderRadius: 8, paddingInline: 8 }}
-            >
-              <List.Item.Meta
-                avatar={<Badge dot={!n.is_read} />}
-                title={<span style={{ fontSize: 13 }}>{n.title}</span>}
-                description={
-                  <>
-                    <div style={{ fontSize: 12 }}>{n.body}</div>
-                    <div style={{ fontSize: 11, color: '#94a3b8' }}>{formatDate(n.created_at)}</div>
-                  </>
-                }
-              />
-            </List.Item>
-          )}
-        />
-      )}
-    </div>
-  );
-
   return (
-    <Popover content={content} trigger="click" open={open} onOpenChange={setOpen} placement="bottomRight">
-      <Badge count={unread} size="small">
-        <Button type="text" shape="circle" icon={<BellOutlined style={{ fontSize: 18 }} />} />
-      </Badge>
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button variant="ghost" size="icon" className="relative text-muted-foreground">
+          <Bell className="h-5 w-5" />
+          {unread > 0 && (
+            <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold text-destructive-foreground">
+              {unread > 9 ? '9+' : unread}
+            </span>
+          )}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-80 p-0">
+        <div className="flex items-center justify-between border-b px-4 py-2.5">
+          <span className="text-sm font-semibold">Notifikasi</span>
+          {unread > 0 && (
+            <button className="text-xs font-medium text-primary hover:underline" onClick={() => void markAllRead()}>
+              Tandai semua dibaca
+            </button>
+          )}
+        </div>
+        {items.length === 0 ? (
+          <div className="px-4 py-8 text-center text-sm text-muted-foreground">Tidak ada notifikasi</div>
+        ) : (
+          <div className="max-h-96 overflow-y-auto py-1">
+            {items.map((n) => (
+              <button
+                key={n.id}
+                onClick={() => void openItem(n)}
+                className={cn(
+                  'flex w-full gap-2.5 px-4 py-2.5 text-left transition-colors hover:bg-accent',
+                  !n.is_read && 'bg-primary/5',
+                )}
+              >
+                <span className={cn('mt-1.5 h-2 w-2 shrink-0 rounded-full', n.is_read ? 'bg-transparent' : 'bg-primary')} />
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm font-medium leading-tight">{n.title}</span>
+                  <span className="mt-0.5 block text-xs text-muted-foreground">{n.body}</span>
+                  <span className="mt-0.5 block text-[11px] text-muted-foreground/70">{formatDate(n.created_at)}</span>
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
+      </PopoverContent>
     </Popover>
   );
 }

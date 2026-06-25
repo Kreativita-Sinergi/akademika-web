@@ -6,6 +6,10 @@ import { useOptions } from '../hooks/useList';
 import api from '../lib/axios';
 import { createResource, errorMessage } from '../api/crud';
 import { Badge, Button, EmptyState, Field, Modal, inputClass } from '../components/ui';
+import { DataTable, type Column } from '@/components/ui/data-table';
+import { Card, CardContent } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
+import { cn } from '@/lib/utils';
 import type {
   AcademicYear,
   ApiResponse,
@@ -58,9 +62,9 @@ export function EvaluationPeriodsPage() {
         ]}
         toForm={(p) => ({ name: p.name, academic_year_id: p.academic_year_id, is_open: p.is_open })}
         rowActions={(p) => (
-          <button onClick={() => setRecap(p)} className="rounded p-1.5 text-primary-600 hover:bg-primary-50" title="Rekap">
-            <BarChart3 size={15} />
-          </button>
+          <Button variant="ghost" size="icon" className="h-8 w-8" title="Rekap" onClick={() => setRecap(p)}>
+            <BarChart3 className="h-4 w-4" />
+          </Button>
         )}
       />
       {recap && <RecapModal period={recap} onClose={() => setRecap(null)} />}
@@ -80,32 +84,15 @@ function RecapModal({ period, onClose }: { period: EvaluationPeriod; onClose: ()
       .finally(() => setLoading(false));
   }, [period.id]);
 
+  const columns: Column<LecturerEvalRecap>[] = [
+    { title: 'Dosen', key: 'lec', render: (_, r) => r.lecturer_name },
+    { title: 'Responden', key: 'resp', dataIndex: 'respondents' },
+    { title: 'Rata-rata (1–5)', key: 'avg', className: 'font-semibold text-primary', render: (_, r) => r.average_score.toFixed(2) },
+  ];
+
   return (
     <Modal open title={`Rekap EDOM — ${period.name}`} onClose={onClose} wide>
-      {loading ? (
-        <div className="py-8 text-center text-sm text-slate-400">Memuat...</div>
-      ) : rows.length === 0 ? (
-        <EmptyState message="Belum ada data evaluasi" />
-      ) : (
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b text-left text-xs uppercase text-slate-500">
-              <th className="py-2">Dosen</th>
-              <th>Responden</th>
-              <th>Rata-rata (1–5)</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r) => (
-              <tr key={r.lecturer_id} className="border-b last:border-0">
-                <td className="py-2">{r.lecturer_name}</td>
-                <td>{r.respondents}</td>
-                <td className="font-semibold text-primary-600">{r.average_score.toFixed(2)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+      <DataTable<LecturerEvalRecap> columns={columns} rowKey={(r) => r.lecturer_id} data={rows} loading={loading} emptyText="Belum ada data evaluasi" />
     </Modal>
   );
 }
@@ -144,7 +131,7 @@ export function MyEvaluationPage() {
 
   return (
     <div>
-      <h1 className="mb-4 text-xl font-semibold">Evaluasi Dosen (EDOM)</h1>
+      <h1 className="mb-4 text-xl font-bold tracking-tight">Evaluasi Dosen (EDOM)</h1>
 
       {periods.length === 0 ? (
         <EmptyState message="Belum ada periode EDOM yang dibuka" />
@@ -165,13 +152,15 @@ export function MyEvaluationPage() {
           ) : (
             <div className="space-y-2">
               {pending.map((s) => (
-                <div key={s.id} className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4">
-                  <div>
-                    <div className="font-medium">{s.course?.name ?? 'Mata Kuliah'}</div>
-                    <div className="text-xs text-slate-400">{s.lecturer?.name ?? '-'}</div>
-                  </div>
-                  <Button onClick={() => setTarget(s)}>Isi Evaluasi</Button>
-                </div>
+                <Card key={s.id}>
+                  <CardContent className="flex items-center justify-between p-4">
+                    <div>
+                      <div className="font-medium">{s.course?.name ?? 'Mata Kuliah'}</div>
+                      <div className="text-xs text-muted-foreground">{s.lecturer?.name ?? '-'}</div>
+                    </div>
+                    <Button onClick={() => setTarget(s)}>Isi Evaluasi</Button>
+                  </CardContent>
+                </Card>
               ))}
             </div>
           )}
@@ -237,18 +226,19 @@ function FillModal({
   return (
     <Modal open title={`EDOM — ${schedule.course?.name ?? ''}`} onClose={onClose} wide>
       <div className="space-y-3">
-        <p className="text-sm text-slate-500">Dosen: {schedule.lecturer?.name ?? '-'} · Skala 1 (kurang) – 5 (sangat baik)</p>
+        <p className="text-sm text-muted-foreground">Dosen: {schedule.lecturer?.name ?? '-'} · Skala 1 (kurang) – 5 (sangat baik)</p>
         {questions.map((q) => (
-          <div key={q.id} className="rounded-lg border border-slate-200 p-3">
+          <div key={q.id} className="rounded-lg border border-border p-3">
             <div className="mb-2 text-sm">{q.text}</div>
             <div className="flex gap-1">
               {[1, 2, 3, 4, 5].map((n) => (
                 <button
                   key={n}
                   onClick={() => setScores((prev) => ({ ...prev, [q.id]: n }))}
-                  className={`flex h-9 w-9 items-center justify-center rounded-lg border text-sm font-medium ${
-                    (scores[q.id] ?? 0) >= n ? 'border-amber-400 bg-amber-50 text-amber-600' : 'border-slate-200 text-slate-400'
-                  }`}
+                  className={cn(
+                    'flex h-9 w-9 items-center justify-center rounded-lg border text-sm font-medium',
+                    (scores[q.id] ?? 0) >= n ? 'border-amber-400 bg-amber-50 text-amber-600' : 'border-border text-muted-foreground',
+                  )}
                 >
                   <Star size={15} fill={(scores[q.id] ?? 0) >= n ? 'currentColor' : 'none'} />
                 </button>
@@ -257,7 +247,7 @@ function FillModal({
           </div>
         ))}
         <Field label="Komentar / Saran (opsional)">
-          <textarea className={inputClass} rows={2} value={comment} onChange={(e) => setComment(e.target.value)} />
+          <Textarea rows={2} value={comment} onChange={(e) => setComment(e.target.value)} />
         </Field>
         <div className="flex justify-end gap-2 pt-2">
           <Button variant="secondary" onClick={onClose}>Batal</Button>

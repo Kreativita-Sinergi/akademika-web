@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Card, Flex, Typography } from 'antd';
 import { Megaphone, Pin } from 'lucide-react';
 import ResourcePage from '../components/crud/ResourcePage';
 import api from '../lib/axios';
 import { Badge, EmptyState, formatDate } from '../components/ui';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { Announcement, ApiResponse } from '../types';
 
 const audienceOptions = [
@@ -75,29 +75,27 @@ export function AnnouncementFeedPage() {
   }, []);
 
   return (
-    <div>
-      <Typography.Title level={4} style={{ marginTop: 0 }}>
-        <Megaphone size={20} className="mr-2 inline text-primary-600" /> Pengumuman
-      </Typography.Title>
+    <div className="space-y-4">
+      <h1 className="flex items-center gap-2 text-xl font-bold tracking-tight">
+        <Megaphone size={20} className="text-primary" /> Pengumuman
+      </h1>
       {!loading && items.length === 0 && <EmptyState message="Belum ada pengumuman" />}
-      <Flex vertical gap={12}>
+      <div className="space-y-3">
         {items.map((a) => (
-          <Card
-            key={a.id}
-            size="small"
-            style={a.is_pinned ? { borderColor: '#fcd34d' } : undefined}
-            title={
-              <Flex align="center" gap={6}>
+          <Card key={a.id} className={a.is_pinned ? 'border-amber-300' : undefined}>
+            <CardHeader className="flex-row items-center justify-between gap-3 space-y-0 pb-2">
+              <CardTitle className="flex items-center gap-1.5 text-base">
                 {a.is_pinned && <Pin size={14} className="text-amber-500" />}
                 {a.title}
-              </Flex>
-            }
-            extra={<span className="text-xs text-slate-400">{formatDate(a.created_at)}</span>}
-          >
-            <p className="whitespace-pre-line text-sm text-slate-600">{a.body}</p>
+              </CardTitle>
+              <span className="text-xs text-muted-foreground">{formatDate(a.created_at)}</span>
+            </CardHeader>
+            <CardContent>
+              <p className="whitespace-pre-line text-sm text-muted-foreground">{a.body}</p>
+            </CardContent>
           </Card>
         ))}
-      </Flex>
+      </div>
     </div>
   );
 }

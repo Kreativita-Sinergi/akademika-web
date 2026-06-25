@@ -1,12 +1,12 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import toast from 'react-hot-toast';
-import { Table, Select, Input, Flex, Typography, Tooltip } from 'antd';
-import type { ColumnsType } from 'antd/es/table';
-import { DownloadOutlined, PlusOutlined } from '@ant-design/icons';
-import { useList } from '../hooks/useList';
-import { createResource, errorMessage } from '../api/crud';
+import { Download, Plus } from 'lucide-react';
+import { createResource, errorMessage, listResource } from '../api/crud';
 import { downloadFile } from '../api/download';
-import { Badge, Button, EmptyState, Field, Modal, Pagination, formatDate } from '../components/ui';
+import { Badge, Button, Field, Modal, formatDate } from '../components/ui';
+import { Textarea } from '@/components/ui/textarea';
+import { Combobox } from '@/components/ui/combobox';
+import { DataTable, type Column, type ListParams } from '@/components/ui/data-table';
 import { letterTypeLabel } from './LettersPage';
 import type { LetterRequest } from '../types';
 
@@ -19,7 +19,9 @@ const typeOptions = [
 
 // Mahasiswa: ajukan surat akademik & unduh yang sudah disetujui.
 export default function MyLettersPage() {
-  const { items, page, setPage, totalPage, loading, refresh } = useList<LetterRequest>('/letters/mine');
+  const [reloadKey, setReloadKey] = useState(0);
+  const reload = () => setReloadKey((k) => k + 1);
+  const fetcher = useCallback((p: ListParams) => listResource<LetterRequest>('/letters/mine', p), []);
   const [open, setOpen] = useState(false);
   const [type, setType] = useState('aktif_kuliah');
   const [purpose, setPurpose] = useState('');
@@ -36,7 +38,7 @@ export default function MyLettersPage() {
       toast.success('Pengajuan surat terkirim');
       setOpen(false);
       setPurpose('');
-      void refresh();
+      reload();
     } catch (err) {
       toast.error(errorMessage(err));
     } finally {
@@ -44,10 +46,10 @@ export default function MyLettersPage() {
     }
   };
 
-  const columns: ColumnsType<LetterRequest> = [
+  const columns: Column<LetterRequest>[] = [
     { title: 'Tanggal', key: 'date', render: (_, l) => formatDate(l.created_at) },
     { title: 'Jenis Surat', key: 'type', render: (_, l) => letterTypeLabel[l.type] ?? l.type },
-    { title: 'Keperluan', dataIndex: 'purpose', key: 'purpose' },
+    { title: 'Keperluan', dataIndex: 'purpose' },
     { title: 'No. Surat', key: 'number', render: (_, l) => l.letter_number || '-' },
     { title: 'Status', key: 'status', render: (_, l) => <Badge value={l.status} /> },
     {
@@ -57,39 +59,36 @@ export default function MyLettersPage() {
       render: (_, l) =>
         l.status === 'disetujui' ? (
           <Button variant="ghost" onClick={() => void downloadFile(`/letters/${l.id}/my-pdf`, `surat-${l.id}.pdf`)}>
-            <DownloadOutlined />
+            <Download className="h-4 w-4" />
           </Button>
         ) : l.status === 'ditolak' && l.note ? (
-          <Tooltip title={l.note}><span className="text-xs text-red-500">ditolak</span></Tooltip>
+          <span className="text-xs text-red-500" title={l.note}>ditolak</span>
         ) : null,
     },
   ];
 
   return (
     <div>
-      <Flex justify="space-between" align="center" style={{ marginBottom: 16 }}>
-        <Typography.Title level={4} style={{ margin: 0 }}>Surat Akademik Saya</Typography.Title>
-        <Button onClick={() => setOpen(true)}><span className="flex items-center gap-1"><PlusOutlined /> Ajukan Surat</span></Button>
-      </Flex>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-xl font-bold tracking-tight">Surat Akademik Saya</h1>
+        <Button onClick={() => setOpen(true)}><span className="flex items-center gap-1"><Plus className="h-4 w-4" /> Ajukan Surat</span></Button>
+      </div>
 
-      <Table
-        rowKey="id"
-        loading={loading}
+      <DataTable<LetterRequest>
+        fetcher={fetcher}
         columns={columns}
-        dataSource={items}
-        pagination={false}
-        size="middle"
-        locale={{ emptyText: <EmptyState message="Belum ada pengajuan surat" /> }}
+        rowKey={(l) => l.id}
+        reloadKey={reloadKey}
+        emptyText="Belum ada pengajuan surat"
       />
-      <Pagination page={page} totalPage={totalPage} onChange={setPage} />
 
       <Modal open={open} title="Ajukan Surat Akademik" onClose={() => setOpen(false)}>
         <div className="space-y-3">
           <Field label="Jenis Surat">
-            <Select className="w-full" value={type} options={typeOptions} onChange={setType} />
+            <Combobox options={typeOptions} value={type} onChange={setType} />
           </Field>
           <Field label="Keperluan">
-            <Input.TextArea rows={3} value={purpose} onChange={(e) => setPurpose(e.target.value)} placeholder="cth: pengajuan beasiswa, keperluan administrasi, dll." />
+            <Textarea rows={3} value={purpose} onChange={(e) => setPurpose(e.target.value)} placeholder="cth: pengajuan beasiswa, keperluan administrasi, dll." />
           </Field>
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="secondary" onClick={() => setOpen(false)}>Batal</Button>

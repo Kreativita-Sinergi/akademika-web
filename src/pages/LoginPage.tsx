@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { GraduationCap } from 'lucide-react';
-import { Card, Form, Input, Button, Typography } from 'antd';
-import { MailOutlined, LockOutlined } from '@ant-design/icons';
+import { GraduationCap, Mail, Lock } from 'lucide-react';
 import api from '../lib/axios';
 import { errorMessage } from '../api/crud';
 import { useAuthStore } from '../store/auth';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import type { ApiResponse } from '../types';
 
 interface LoginData {
@@ -21,13 +22,16 @@ interface LoginData {
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const setAuth = useAuthStore((s) => s.setAuth);
   const navigate = useNavigate();
 
-  const onFinish = async (values: { email: string; password: string }) => {
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     setLoading(true);
     try {
-      const res = await api.post<ApiResponse<LoginData>>('/auth/login', values);
+      const res = await api.post<ApiResponse<LoginData>>('/auth/login', { email, password });
       const data = res.data.data;
       setAuth(data.token, {
         user_id: data.user_id,
@@ -48,23 +52,49 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-primary-50 to-slate-100 p-4">
-      <Card style={{ width: '100%', maxWidth: 380 }} variant="borderless" className="shadow-lg">
-        <div className="mb-6 flex flex-col items-center">
-          <GraduationCap className="mb-2 text-primary-600" size={40} />
-          <Typography.Title level={3} style={{ margin: 0 }}>Akademika</Typography.Title>
-          <Typography.Text type="secondary">Sistem Informasi Akademik Kampus</Typography.Text>
-        </div>
-        <Form layout="vertical" onFinish={onFinish} requiredMark={false} size="large">
-          <Form.Item name="email" label="Email" rules={[{ required: true, type: 'email', message: 'Email tidak valid' }]}>
-            <Input prefix={<MailOutlined />} placeholder="email@kampus.ac.id" />
-          </Form.Item>
-          <Form.Item name="password" label="Password" rules={[{ required: true, message: 'Password wajib diisi' }]}>
-            <Input.Password prefix={<LockOutlined />} placeholder="••••••••" />
-          </Form.Item>
-          <Button type="primary" htmlType="submit" loading={loading} block>
-            Masuk
-          </Button>
-        </Form>
+      <Card className="w-full max-w-sm shadow-lg">
+        <CardContent className="p-6">
+          <div className="mb-6 flex flex-col items-center text-center">
+            <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-gradient text-white shadow-md shadow-primary/30">
+              <GraduationCap size={28} />
+            </div>
+            <h1 className="text-xl font-bold tracking-tight text-gradient">Akademika</h1>
+            <p className="text-sm text-muted-foreground">Sistem Informasi Akademik Kampus</p>
+          </div>
+          <form onSubmit={onSubmit} className="space-y-4">
+            <div>
+              <label className="mb-1.5 block text-sm font-medium">Email</label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  type="email"
+                  required
+                  className="pl-9"
+                  placeholder="email@kampus.ac.id"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </div>
+            </div>
+            <div>
+              <label className="mb-1.5 block text-sm font-medium">Password</label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  type="password"
+                  required
+                  className="pl-9"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </div>
+            </div>
+            <Button type="submit" disabled={loading} className="w-full">
+              {loading ? 'Memproses...' : 'Masuk'}
+            </Button>
+          </form>
+        </CardContent>
       </Card>
     </div>
   );

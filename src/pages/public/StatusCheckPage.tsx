@@ -62,7 +62,7 @@ export default function StatusCheckPage() {
           <Button type="submit" disabled={loading} className="w-full">
             {loading ? 'Memeriksa...' : 'Cek Status'}
           </Button>
-          <Link to={`/daftar/${campusCode}`} className="block text-center text-sm text-primary-600 hover:underline">
+          <Link to={`/daftar/${campusCode}`} className="block text-center text-sm text-primary hover:underline">
             Belum daftar? Daftar sekarang
           </Link>
         </form>
@@ -70,12 +70,12 @@ export default function StatusCheckPage() {
 
       {result && a && (
         <div className="space-y-4">
-          <div className="rounded-xl border border-slate-200 p-4">
+          <div className="rounded-xl border border-border p-4">
             <div className="mb-1 flex items-center justify-between">
               <span className="font-semibold">{a.name}</span>
               <Badge value={a.status} />
             </div>
-            <div className="text-sm text-slate-500">
+            <div className="text-sm text-muted-foreground">
               {a.registration_number} · {a.first_choice?.name ?? '-'}
             </div>
             <div className="mt-2 text-sm">
@@ -128,7 +128,7 @@ export default function StatusCheckPage() {
 
           {a.exam_score != null && (
             <div className={`rounded-xl p-4 text-center ${a.status === 'lulus' || a.status === 'daftar_ulang' || a.status === 'diterima' ? 'bg-emerald-50' : 'bg-red-50'}`}>
-              <div className="text-sm text-slate-500">Nilai Ujian</div>
+              <div className="text-sm text-muted-foreground">Nilai Ujian</div>
               <div className="text-3xl font-bold">{a.exam_score}</div>
               <div className={`mt-1 font-semibold ${a.status === 'tidak_lulus' ? 'text-red-600' : 'text-emerald-600'}`}>
                 {a.status === 'tidak_lulus' ? 'Mohon maaf, Anda belum lulus' : 'Selamat, Anda LULUS ujian masuk! 🎉'}
@@ -137,7 +137,7 @@ export default function StatusCheckPage() {
           )}
 
           {a.status === 'lulus' && (
-            <p className="text-center text-sm text-slate-500">
+            <p className="text-center text-sm text-muted-foreground">
               Silakan datang ke kampus untuk <b>daftar ulang</b> (penetapan UKT & kelengkapan berkas).
             </p>
           )}

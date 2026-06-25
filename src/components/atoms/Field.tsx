@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 export function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-sm font-medium text-slate-600">{label}</span>
+      <span className="mb-1.5 block text-sm font-medium text-foreground">{label}</span>
       {children}
     </label>
   );
@@ -15,6 +15,6 @@ export interface SelectOption {
   label: string;
 }
 
-// Kelas input native agar selaras dengan tinggi/rounded Ant Design (untuk form custom).
+// Kelas input native bergaya shadcn (dipakai input/select native di halaman lama).
 export const inputClass =
-  'w-full rounded-[8px] border border-[#d9d9d9] px-3 py-[7px] text-sm outline-none transition focus:border-[#4263eb] focus:shadow-[0_0_0_2px_rgba(66,99,235,0.1)]';
+  'flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50';

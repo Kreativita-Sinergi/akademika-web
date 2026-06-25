@@ -31,7 +31,7 @@ export function MaterialsPage() {
           label: 'Lampiran',
           render: (m) =>
             m.file_url || m.link_url ? (
-              <a href={m.file_url || m.link_url} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-primary-600">
+              <a href={m.file_url || m.link_url} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-primary">
                 <ExternalLink size={13} /> Buka
               </a>
             ) : (
@@ -94,7 +94,7 @@ export function AssignmentsPage() {
         rowActions={(a) => (
           <button
             onClick={() => setTarget(a)}
-            className="rounded p-1.5 text-primary-600 hover:bg-primary-50"
+            className="rounded p-1.5 text-primary hover:bg-primary/5"
             title="Lihat & nilai pengumpulan"
           >
             <ClipboardCheck size={15} />
@@ -140,7 +140,7 @@ function SubmissionsModal({ assignment, onClose }: { assignment: Assignment; onC
   return (
     <Modal open title={`Pengumpulan — ${assignment.title}`} onClose={onClose} wide>
       {loading ? (
-        <div className="py-8 text-center text-sm text-slate-400">Memuat...</div>
+        <div className="py-8 text-center text-sm text-muted-foreground">Memuat...</div>
       ) : subs.length === 0 ? (
         <EmptyState message="Belum ada mahasiswa yang mengumpulkan" />
       ) : (
@@ -165,11 +165,11 @@ function SubmissionRow({
   const [feedback, setFeedback] = useState(sub.feedback || '');
 
   return (
-    <div className="rounded-lg border border-slate-200 p-3">
+    <div className="rounded-lg border border-border p-3">
       <div className="mb-2 flex items-center justify-between">
         <div>
           <div className="font-medium">{sub.student?.name ?? '-'}</div>
-          <div className="text-xs text-slate-400">
+          <div className="text-xs text-muted-foreground">
             {sub.student?.nim} · dikumpulkan {formatDate(sub.submitted_at)}
           </div>
         </div>
@@ -178,13 +178,13 @@ function SubmissionRow({
             href={sub.file_url || sub.link_url}
             target="_blank"
             rel="noreferrer"
-            className="flex items-center gap-1 text-sm text-primary-600"
+            className="flex items-center gap-1 text-sm text-primary"
           >
             <ExternalLink size={14} /> Buka tugas
           </a>
         )}
       </div>
-      {sub.note && <p className="mb-2 text-sm text-slate-500">{sub.note}</p>}
+      {sub.note && <p className="mb-2 text-sm text-muted-foreground">{sub.note}</p>}
       <div className="flex items-end gap-2">
         <div className="w-24">
           <Field label="Nilai">

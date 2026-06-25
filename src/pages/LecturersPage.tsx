@@ -9,11 +9,11 @@ export default function LecturersPage() {
       title="Dosen"
       endpoint="/lecturers"
       columns={[
-        { key: 'nidn', label: 'NIDN' },
-        { key: 'name', label: 'Nama' },
+        { key: 'nidn', label: 'NIDN', sortable: true },
+        { key: 'name', label: 'Nama', sortable: true },
         { key: 'study_program', label: 'Homebase', render: (l) => l.study_program?.name ?? '-' },
-        { key: 'position', label: 'Jabatan' },
-        { key: 'education_level', label: 'Pendidikan' },
+        { key: 'position', label: 'Jabatan', sortable: true },
+        { key: 'education_level', label: 'Pendidikan', sortable: true },
         { key: 'email', label: 'Email' },
       ]}
       fields={[

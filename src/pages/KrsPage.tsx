@@ -1,11 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { Check, Plus, Send, Trash2, X } from 'lucide-react';
-import { useList, useOptions } from '../hooks/useList';
+import { useOptions } from '../hooks/useList';
 import api from '../lib/axios';
-import { createResource, deleteResource, errorMessage } from '../api/crud';
-import { Badge, Button, EmptyState, Field, Modal, Pagination, inputClass } from '../components/ui';
-import type { AcademicYear, ApiResponse, KrsPlan, Schedule } from '../types';
+import { createResource, deleteResource, errorMessage, listResource } from '../api/crud';
+import { Badge, Button, EmptyState, Field, Modal, inputClass } from '../components/ui';
+import { DataTable, type Column, type ListParams } from '@/components/ui/data-table';
+import { Textarea } from '@/components/ui/textarea';
+import type { AcademicYear, ApiResponse, KrsItem, KrsPlan, Schedule } from '../types';
 
 // ── Mahasiswa: menyusun KRS ──────────────────────────────────────────────────
 export function MyKrsPage() {
@@ -69,9 +71,26 @@ export function MyKrsPage() {
     }
   };
 
+  const itemCols: Column<KrsItem>[] = [
+    { title: 'Mata Kuliah', key: 'course', render: (_, i) => i.course?.name ?? '-' },
+    { title: 'SKS', key: 'sks', dataIndex: 'sks', width: 70 },
+    {
+      title: '',
+      key: 'act',
+      align: 'right',
+      width: 56,
+      render: (_, i) =>
+        editable ? (
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => void removeItem(i.id)}>
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        ) : null,
+    },
+  ];
+
   return (
     <div>
-      <h1 className="mb-4 text-xl font-semibold">Kartu Rencana Studi (KRS)</h1>
+      <h1 className="mb-4 text-xl font-bold tracking-tight">Kartu Rencana Studi (KRS)</h1>
 
       <div className="mb-4 max-w-sm">
         <Field label="Tahun Akademik">
@@ -89,40 +108,16 @@ export function MyKrsPage() {
       ) : (
         <div className="grid gap-5 lg:grid-cols-2">
           {/* KRS tersusun */}
-          <div className="rounded-xl border border-slate-200 bg-white p-4">
-            <div className="mb-3 flex items-center justify-between">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
               <h2 className="font-semibold">KRS Saya</h2>
               <Badge value={plan.status} />
             </div>
             {plan.status === 'ditolak' && plan.advisor_note && (
-              <div className="mb-2 rounded-lg bg-red-50 p-2 text-sm text-red-600">Catatan PA: {plan.advisor_note}</div>
+              <div className="rounded-lg bg-destructive/10 p-2.5 text-sm text-destructive">Catatan PA: {plan.advisor_note}</div>
             )}
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b text-left text-xs uppercase text-slate-500">
-                  <th className="py-2">Mata Kuliah</th>
-                  <th>SKS</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {(plan.items ?? []).map((i) => (
-                  <tr key={i.id} className="border-b last:border-0">
-                    <td className="py-2">{i.course?.name ?? '-'}</td>
-                    <td>{i.sks}</td>
-                    <td className="text-right">
-                      {editable && (
-                        <button onClick={() => void removeItem(i.id)} className="rounded p-1 text-red-500 hover:bg-red-50">
-                          <Trash2 size={14} />
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {(plan.items ?? []).length === 0 && <div className="py-4 text-center text-sm text-slate-400">Belum ada mata kuliah</div>}
-            <div className="mt-3 flex items-center justify-between border-t pt-3">
+            <DataTable<KrsItem> columns={itemCols} rowKey={(i) => i.id} data={plan.items ?? []} emptyText="Belum ada mata kuliah" />
+            <div className="flex items-center justify-between border-t border-border/70 pt-3">
               <span className="text-sm">Total: <span className="font-bold">{plan.total_sks} SKS</span></span>
               {editable && (
                 <Button disabled={(plan.items ?? []).length === 0} onClick={() => void submit()}>
@@ -134,28 +129,24 @@ export function MyKrsPage() {
 
           {/* MK ditawarkan */}
           {editable && (
-            <div className="rounded-xl border border-slate-200 bg-white p-4">
+            <div className="rounded-2xl border border-border/70 bg-card p-4 shadow-sm">
               <h2 className="mb-3 font-semibold">Mata Kuliah Ditawarkan</h2>
               <div className="space-y-2">
                 {offered.map((s) => {
                   const taken = takenCourseIds.has(s.course_id);
                   return (
-                    <div key={s.id} className="flex items-center justify-between rounded-lg border border-slate-200 p-2.5">
+                    <div key={s.id} className="flex items-center justify-between rounded-lg border border-border p-2.5">
                       <div className="text-sm">
                         <div className="font-medium">{s.course?.name ?? 'MK'}</div>
-                        <div className="text-xs text-slate-400">{s.course?.sks ?? 0} SKS · {s.lecturer?.name ?? '-'}</div>
+                        <div className="text-xs text-muted-foreground">{s.course?.sks ?? 0} SKS · {s.lecturer?.name ?? '-'}</div>
                       </div>
-                      <button
-                        disabled={taken}
-                        onClick={() => void addCourse(s)}
-                        className="rounded-lg border border-primary-200 p-1.5 text-primary-600 hover:bg-primary-50 disabled:opacity-30"
-                      >
-                        <Plus size={15} />
-                      </button>
+                      <Button variant="outline" size="icon" className="h-8 w-8" disabled={taken} onClick={() => void addCourse(s)}>
+                        <Plus className="h-4 w-4" />
+                      </Button>
                     </div>
                   );
                 })}
-                {offered.length === 0 && <div className="py-4 text-center text-sm text-slate-400">Belum ada jadwal ditawarkan</div>}
+                {offered.length === 0 && <div className="py-4 text-center text-sm text-muted-foreground">Belum ada jadwal ditawarkan</div>}
               </div>
             </div>
           )}
@@ -167,7 +158,9 @@ export function MyKrsPage() {
 
 // ── Dosen wali / admin: persetujuan KRS ──────────────────────────────────────
 export function KrsApprovalPage() {
-  const { items, page, setPage, totalPage, loading, refresh } = useList<KrsPlan>('/krs', { status: 'diajukan' });
+  const [reloadKey, setReloadKey] = useState(0);
+  const reload = () => setReloadKey((k) => k + 1);
+  const fetcher = useCallback((p: ListParams) => listResource<KrsPlan>('/krs', p), []);
   const [target, setTarget] = useState<KrsPlan | null>(null);
   const [note, setNote] = useState('');
 
@@ -178,61 +171,61 @@ export function KrsApprovalPage() {
       toast.success(approve ? 'KRS disetujui' : 'KRS ditolak');
       setTarget(null);
       setNote('');
-      void refresh();
+      reload();
     } catch (err) {
       toast.error(errorMessage(err));
     }
   };
 
+  const columns: Column<KrsPlan>[] = [
+    {
+      title: 'Mahasiswa',
+      key: 'mhs',
+      render: (_, p) => (
+        <div>
+          {p.student?.name ?? '-'}
+          <div className="text-xs text-muted-foreground">{p.student?.nim}</div>
+        </div>
+      ),
+    },
+    { title: 'Prodi', key: 'prodi', render: (_, p) => p.student?.study_program?.name ?? '-' },
+    { title: 'Smt', key: 'smt', dataIndex: 'semester_number', width: 70 },
+    { title: 'Total SKS', key: 'sks', dataIndex: 'total_sks', width: 100 },
+    { title: 'Status', key: 'status', render: (_, p) => <Badge value={p.status} /> },
+    {
+      title: 'Aksi',
+      key: 'act',
+      align: 'right',
+      width: 100,
+      render: (_, p) => (
+        <Button variant="secondary" onClick={() => { setTarget(p); setNote(''); }}>Tinjau</Button>
+      ),
+    },
+  ];
+
   return (
     <div>
-      <h1 className="mb-4 text-xl font-semibold">Persetujuan KRS</h1>
+      <h1 className="mb-4 text-xl font-bold tracking-tight">Persetujuan KRS</h1>
 
-      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs uppercase text-slate-500">
-              <th className="px-4 py-3 font-medium">Mahasiswa</th>
-              <th className="px-4 py-3 font-medium">Prodi</th>
-              <th className="px-4 py-3 font-medium">Smt</th>
-              <th className="px-4 py-3 font-medium">Total SKS</th>
-              <th className="px-4 py-3 font-medium">Status</th>
-              <th className="px-4 py-3 text-right font-medium">Aksi</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((p) => (
-              <tr key={p.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50">
-                <td className="px-4 py-3">
-                  {p.student?.name ?? '-'}
-                  <div className="text-xs text-slate-400">{p.student?.nim}</div>
-                </td>
-                <td className="px-4 py-3">{p.student?.study_program?.name ?? '-'}</td>
-                <td className="px-4 py-3">{p.semester_number}</td>
-                <td className="px-4 py-3">{p.total_sks}</td>
-                <td className="px-4 py-3"><Badge value={p.status} /></td>
-                <td className="px-4 py-3 text-right">
-                  <Button variant="secondary" onClick={() => { setTarget(p); setNote(''); }}>Tinjau</Button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {!loading && items.length === 0 && <EmptyState message="Tidak ada KRS menunggu persetujuan" />}
-      </div>
-
-      <Pagination page={page} totalPage={totalPage} onChange={setPage} />
+      <DataTable<KrsPlan>
+        fetcher={fetcher}
+        columns={columns}
+        rowKey={(p) => p.id}
+        reloadKey={reloadKey}
+        extraParams={{ status: 'diajukan' }}
+        emptyText="Tidak ada KRS menunggu persetujuan"
+      />
 
       <Modal open={Boolean(target)} title={`Tinjau KRS — ${target?.student?.name ?? ''}`} onClose={() => setTarget(null)}>
         {target && (
-          <div className="mb-3 space-y-1 rounded-lg bg-slate-50 p-3 text-sm">
+          <div className="mb-3 space-y-1 rounded-lg bg-muted p-3 text-sm">
             <div>Mahasiswa: <span className="font-medium">{target.student?.name}</span> ({target.student?.nim})</div>
             <div>Semester: {target.semester_number}</div>
             <div>Total beban: <span className="font-semibold">{target.total_sks} SKS</span></div>
           </div>
         )}
         <Field label="Catatan untuk mahasiswa (opsional)">
-          <textarea className={inputClass} rows={2} value={note} onChange={(e) => setNote(e.target.value)} />
+          <Textarea rows={2} value={note} onChange={(e) => setNote(e.target.value)} />
         </Field>
         <div className="flex justify-end gap-2 pt-3">
           <Button variant="danger" onClick={() => void review(false)}>

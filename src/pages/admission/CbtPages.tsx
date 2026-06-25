@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import ResourcePage from '../../components/crud/ResourcePage';
 import { useOptions } from '../../hooks/useList';
-import { Badge, Field, inputClass } from '../../components/ui';
+import { Badge, inputClass } from '../../components/ui';
 import type { AdmissionWave } from '../../types';
 
 interface ExamQuestion {
@@ -34,27 +34,27 @@ export function QuestionsPage() {
   const [waveId, setWaveId] = useState('');
 
   return (
-    <div>
-      <div className="mb-4 max-w-xs">
-        <Field label="Filter Gelombang">
-          <select className={inputClass} value={waveId} onChange={(e) => setWaveId(e.target.value)}>
-            <option value="">Semua gelombang</option>
-            {waves.map((w) => (
-              <option key={w.value} value={w.value}>{w.label}</option>
-            ))}
-          </select>
-        </Field>
-      </div>
-      <ResourcePage<ExamQuestion>
-        key={waveId}
-        title="Bank Soal Ujian Masuk"
-        endpoint="/admission/questions"
-        extraParams={waveId ? { admission_wave_id: waveId } : undefined}
-        columns={[
-          { key: 'question', label: 'Soal', render: (q) => <span className="line-clamp-2 max-w-md">{q.question}</span> },
-          { key: 'correct_option', label: 'Kunci', render: (q) => <b>{q.correct_option}</b> },
-          { key: 'points', label: 'Poin' },
-        ]}
+    <ResourcePage<ExamQuestion>
+      title="Bank Soal Ujian Masuk"
+      endpoint="/admission/questions"
+      extraParams={waveId ? { admission_wave_id: waveId } : undefined}
+      headerActions={() => (
+        <select
+          className={`${inputClass} w-auto min-w-[12rem]`}
+          value={waveId}
+          onChange={(e) => setWaveId(e.target.value)}
+        >
+          <option value="">Semua gelombang</option>
+          {waves.map((w) => (
+            <option key={w.value} value={w.value}>{w.label}</option>
+          ))}
+        </select>
+      )}
+      columns={[
+        { key: 'question', label: 'Soal', render: (q) => <span className="line-clamp-2 max-w-md">{q.question}</span> },
+        { key: 'correct_option', label: 'Kunci', render: (q) => <b>{q.correct_option}</b> },
+        { key: 'points', label: 'Poin' },
+      ]}
         fields={[
           { name: 'admission_wave_id', label: 'Gelombang', type: 'select', options: waves, required: true },
           { name: 'question', label: 'Pertanyaan', type: 'textarea', required: true },
@@ -82,7 +82,6 @@ export function QuestionsPage() {
           points: q.points,
         })}
       />
-    </div>
   );
 }
 

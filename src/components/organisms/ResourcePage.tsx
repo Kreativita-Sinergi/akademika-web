@@ -1,17 +1,22 @@
-import { useState, type ReactNode } from 'react';
+import { useCallback, useState, type ReactNode } from 'react';
 import toast from 'react-hot-toast';
-import { Table, Input, InputNumber, Select, Checkbox, Upload, Space } from 'antd';
-import type { ColumnsType } from 'antd/es/table';
-import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined, UploadOutlined } from '@ant-design/icons';
-import { createResource, deleteResource, errorMessage, updateResource } from '../../api/crud';
+import { Plus, Pencil, Trash2, Upload as UploadIcon } from 'lucide-react';
+import { createResource, deleteResource, errorMessage, listResource, updateResource } from '../../api/crud';
 import { uploadFile } from '../../api/upload';
-import { useList } from '../../hooks/useList';
-import { Modal, Pagination } from '../molecules';
-import { Button, Field, type SelectOption } from '../atoms';
+import { Modal } from '../molecules';
+import { Field, type SelectOption } from '../atoms';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
+import { Combobox } from '@/components/ui/combobox';
+import { DataTable, type Column, type ListParams } from '@/components/ui/data-table';
 
 export interface ColumnDef<T> {
   key: string;
   label: string;
+  /** kolom DB untuk sortir server-side; aktifkan klik-sortir di header */
+  sortable?: boolean;
   render?: (item: T) => ReactNode;
 }
 
@@ -33,15 +38,16 @@ interface ResourcePageProps<T extends { id: string }> {
   fields: FieldDef[];
   toForm?: (item: T) => Record<string, unknown>;
   toPayload?: (form: Record<string, unknown>) => Record<string, unknown>;
-  rowActions?: (item: T, refresh: () => void) => ReactNode;
-  headerActions?: (refresh: () => void) => ReactNode;
+  rowActions?: (item: T, reload: () => void) => ReactNode;
+  headerActions?: (reload: () => void) => ReactNode;
   extraParams?: Record<string, string | number | undefined>;
   canCreate?: boolean;
   canEdit?: boolean;
   canDelete?: boolean;
 }
 
-// Organism ResourcePage: halaman CRUD generik berbasis Ant Design Table + Form.
+// Organism ResourcePage: halaman CRUD generik berbasis DataTable (mode server:
+// search, sort, & paginasi terintegrasi dalam satu kartu — seperti Inventra).
 export default function ResourcePage<T extends { id: string }>({
   title,
   endpoint,
@@ -56,12 +62,15 @@ export default function ResourcePage<T extends { id: string }>({
   canEdit = true,
   canDelete = true,
 }: ResourcePageProps<T>) {
-  const { items, page, setPage, totalPage, search, setSearch, loading, refresh } = useList<T>(endpoint, extraParams);
+  const [reloadKey, setReloadKey] = useState(0);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<T | null>(null);
   const [form, setForm] = useState<Record<string, unknown>>({});
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState<string | null>(null);
+
+  const reload = () => setReloadKey((k) => k + 1);
+  const fetcher = useCallback((params: ListParams) => listResource<T>(endpoint, params), [endpoint]);
 
   const handleUpload = async (field: FieldDef, file: File) => {
     setUploading(field.name);
@@ -104,7 +113,7 @@ export default function ResourcePage<T extends { id: string }>({
         toast.success('Data dibuat');
       }
       setModalOpen(false);
-      void refresh();
+      reload();
     } catch (err) {
       toast.error(errorMessage(err));
     } finally {
@@ -117,16 +126,18 @@ export default function ResourcePage<T extends { id: string }>({
     try {
       await deleteResource(`${endpoint}/${item.id}`);
       toast.success('Data dihapus');
-      void refresh();
+      reload();
     } catch (err) {
       toast.error(errorMessage(err));
     }
   };
 
-  const tableColumns: ColumnsType<T> = [
+  const tableColumns: Column<T>[] = [
     ...columns.map((col) => ({
       title: col.label,
       key: col.key,
+      sortable: col.sortable,
+      sortKey: col.key,
       render: (_: unknown, item: T) =>
         col.render ? col.render(item) : String((item as Record<string, unknown>)[col.key] ?? '-'),
     })),
@@ -136,53 +147,53 @@ export default function ResourcePage<T extends { id: string }>({
       align: 'right' as const,
       width: 120,
       render: (_: unknown, item: T) => (
-        <Space size={4}>
-          {rowActions?.(item, refresh)}
-          {canEdit && <Button variant="ghost" onClick={() => openEdit(item)}><EditOutlined /></Button>}
-          {canDelete && <Button variant="ghost" onClick={() => void handleDelete(item)}><DeleteOutlined style={{ color: '#ef4444' }} /></Button>}
-        </Space>
+        <div className="flex items-center justify-end gap-1">
+          {rowActions?.(item, reload)}
+          {canEdit && (
+            <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => openEdit(item)}>
+              <Pencil className="h-4 w-4" />
+            </Button>
+          )}
+          {canDelete && (
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8 text-destructive"
+              onClick={() => void handleDelete(item)}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
       ),
     },
   ];
 
   return (
     <div>
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-xl font-semibold">{title}</h1>
-        <Space>
-          {headerActions?.(refresh)}
-          {canCreate && (
-            <Button onClick={openCreate}>
-              <span className="flex items-center gap-1"><PlusOutlined /> Tambah</span>
-            </Button>
-          )}
-        </Space>
-      </div>
+      <h1 className="mb-4 text-xl font-bold tracking-tight">{title}</h1>
 
-      <div className="mb-3 max-w-sm">
-        <Input
-          allowClear
-          prefix={<SearchOutlined className="text-slate-400" />}
-          placeholder="Cari..."
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setPage(1);
-          }}
-        />
-      </div>
-
-      <Table<T>
-        rowKey="id"
-        loading={loading}
+      <DataTable<T>
+        fetcher={fetcher}
         columns={tableColumns}
-        dataSource={items}
-        pagination={false}
-        size="middle"
-        scroll={{ x: 'max-content' }}
+        rowKey={(item) => item.id}
+        reloadKey={reloadKey}
+        extraParams={extraParams}
+        searchable
+        exportable
+        exportName={title}
+        searchPlaceholder="Cari..."
+        toolbar={
+          <>
+            {headerActions?.(reload)}
+            {canCreate && (
+              <Button onClick={openCreate}>
+                <Plus className="h-4 w-4" /> Tambah
+              </Button>
+            )}
+          </>
+        }
       />
-
-      <Pagination page={page} totalPage={totalPage} onChange={setPage} />
 
       <Modal open={modalOpen} title={editing ? `Edit ${title}` : `Tambah ${title}`} onClose={() => setModalOpen(false)}>
         <form
@@ -195,50 +206,51 @@ export default function ResourcePage<T extends { id: string }>({
           {fields.map((f) => (
             <Field key={f.name} label={f.label}>
               {f.type === 'select' ? (
-                <Select
-                  className="w-full"
-                  value={(form[f.name] as string) || undefined}
+                <Combobox
+                  options={f.options ?? []}
+                  value={(form[f.name] as string) || ''}
+                  allowClear
                   placeholder="— pilih —"
-                  options={f.options}
-                  showSearch
-                  optionFilterProp="label"
                   onChange={(v) => setForm({ ...form, [f.name]: v })}
                 />
               ) : f.type === 'checkbox' ? (
-                <Checkbox
-                  checked={Boolean(form[f.name])}
-                  onChange={(e) => setForm({ ...form, [f.name]: e.target.checked })}
-                />
+                <div className="pt-1">
+                  <Switch
+                    checked={Boolean(form[f.name])}
+                    onCheckedChange={(v) => setForm({ ...form, [f.name]: v })}
+                  />
+                </div>
               ) : f.type === 'file' ? (
                 <div className="space-y-1">
-                  <Upload
-                    showUploadList={false}
-                    beforeUpload={(file) => {
-                      void handleUpload(f, file as File);
-                      return false;
-                    }}
-                  >
-                    <Button variant="secondary">
-                      <span className="flex items-center gap-1"><UploadOutlined /> {uploading === f.name ? 'Mengunggah...' : 'Unggah File'}</span>
-                    </Button>
-                  </Upload>
+                  <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-input bg-background px-3 py-2 text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground">
+                    <UploadIcon className="h-4 w-4" />
+                    {uploading === f.name ? 'Mengunggah...' : 'Unggah File'}
+                    <input
+                      type="file"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) void handleUpload(f, file);
+                      }}
+                    />
+                  </label>
                   {Boolean(form[f.name]) && uploading !== f.name && (
-                    <a href={String(form[f.name])} target="_blank" rel="noreferrer" className="block truncate text-xs text-primary-600 underline">
+                    <a href={String(form[f.name])} target="_blank" rel="noreferrer" className="block truncate text-xs text-primary underline">
                       Lihat file terunggah
                     </a>
                   )}
                 </div>
               ) : f.type === 'textarea' ? (
-                <Input.TextArea
+                <Textarea
                   rows={3}
                   value={String(form[f.name] ?? '')}
                   onChange={(e) => setForm({ ...form, [f.name]: e.target.value })}
                 />
               ) : f.type === 'number' ? (
-                <InputNumber
-                  className="w-full"
-                  value={form[f.name] as number}
-                  onChange={(v) => setForm({ ...form, [f.name]: v ?? 0 })}
+                <Input
+                  type="number"
+                  value={String(form[f.name] ?? '')}
+                  onChange={(e) => setForm({ ...form, [f.name]: e.target.value === '' ? 0 : Number(e.target.value) })}
                 />
               ) : (
                 <Input
@@ -252,7 +264,7 @@ export default function ResourcePage<T extends { id: string }>({
             </Field>
           ))}
           <div className="flex justify-end gap-2 pt-2">
-            <Button variant="secondary" onClick={() => setModalOpen(false)}>Batal</Button>
+            <Button type="button" variant="secondary" onClick={() => setModalOpen(false)}>Batal</Button>
             <Button type="submit" disabled={saving}>{saving ? 'Menyimpan...' : 'Simpan'}</Button>
           </div>
         </form>

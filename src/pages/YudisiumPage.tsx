@@ -1,16 +1,21 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { Check, Download, FilePlus, Plus, Trash2 } from 'lucide-react';
-import { useList, useOptions } from '../hooks/useList';
+import { useOptions } from '../hooks/useList';
 import api from '../lib/axios';
-import { createResource, deleteResource, patchResource, errorMessage } from '../api/crud';
+import { createResource, deleteResource, patchResource, errorMessage, listResource } from '../api/crud';
 import { downloadFile } from '../api/download';
-import { Badge, Button, EmptyState, Field, Modal, Pagination, inputClass, formatDate } from '../components/ui';
+import { Badge, Button, Field, Modal, inputClass, formatDate } from '../components/ui';
+import { DataTable, type Column, type ListParams } from '@/components/ui/data-table';
+import { Textarea } from '@/components/ui/textarea';
+import { Combobox } from '@/components/ui/combobox';
 import type { ApiResponse, Skpi, Student, Yudisium } from '../types';
 
 // ── Yudisium ─────────────────────────────────────────────────────────────────
 export function YudisiumPage() {
-  const { items, page, setPage, totalPage, loading, refresh } = useList<Yudisium>('/yudisium');
+  const [reloadKey, setReloadKey] = useState(0);
+  const reload = () => setReloadKey((k) => k + 1);
+  const fetcher = useCallback((p: ListParams) => listResource<Yudisium>('/yudisium', p), []);
   const students = useOptions<Student>('/students', (s) => `${s.nim} — ${s.name}`);
   const [proposeOpen, setProposeOpen] = useState(false);
   const [studentId, setStudentId] = useState('');
@@ -24,7 +29,7 @@ export function YudisiumPage() {
       toast.success('Yudisium diajukan');
       setProposeOpen(false);
       setStudentId('');
-      void refresh();
+      reload();
     } catch (err) {
       toast.error(errorMessage(err));
     }
@@ -43,7 +48,7 @@ export function YudisiumPage() {
       });
       toast.success('Yudisium disahkan');
       setApprove(null);
-      void refresh();
+      reload();
     } catch (err) {
       toast.error(errorMessage(err));
     }
@@ -53,80 +58,67 @@ export function YudisiumPage() {
     if (!confirm('Hapus data yudisium ini?')) return;
     try {
       await deleteResource(`/yudisium/${y.id}`);
-      void refresh();
+      reload();
     } catch (err) {
       toast.error(errorMessage(err));
     }
   };
 
+  const columns: Column<Yudisium>[] = [
+    {
+      title: 'Mahasiswa',
+      key: 'mhs',
+      render: (_, y) => (
+        <div>
+          {y.student?.name ?? '-'}
+          <div className="text-xs text-muted-foreground">{y.student?.nim}</div>
+        </div>
+      ),
+    },
+    { title: 'IPK', key: 'ipk', className: 'font-semibold text-primary', render: (_, y) => y.ipk.toFixed(2) },
+    { title: 'Predikat', key: 'predicate', className: 'capitalize', render: (_, y) => y.predicate },
+    { title: 'No. Yudisium', key: 'number', render: (_, y) => y.number || '-' },
+    { title: 'Status', key: 'status', render: (_, y) => <Badge value={y.status === 'disahkan' ? 'lulus' : 'diajukan'} /> },
+    {
+      title: 'Aksi',
+      key: 'act',
+      align: 'right',
+      render: (_, y) => (
+        <div className="flex items-center justify-end gap-1">
+          {y.status !== 'disahkan' && (
+            <Button variant="ghost" size="icon" className="h-8 w-8 text-emerald-600 hover:text-emerald-600" title="Sahkan" onClick={() => { setApprove(y); setForm({ number: '', decree_number: '', date: '', note: '' }); }}>
+              <Check className="h-4 w-4" />
+            </Button>
+          )}
+          {y.status === 'disahkan' && (
+            <Button variant="ghost" size="icon" className="h-8 w-8 text-primary hover:text-primary" title="Unduh PDF" onClick={() => void downloadFile(`/yudisium/${y.id}/pdf`, `yudisium-${y.student?.nim ?? y.id}.pdf`)}>
+              <Download className="h-4 w-4" />
+            </Button>
+          )}
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" title="Hapus" onClick={() => void remove(y)}>
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+      ),
+    },
+  ];
+
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Yudisium</h1>
+        <h1 className="text-xl font-bold tracking-tight">Yudisium</h1>
         <Button onClick={() => setProposeOpen(true)}>
           <span className="flex items-center gap-1"><Plus size={16} /> Ajukan Yudisium</span>
         </Button>
       </div>
 
-      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs uppercase text-slate-500">
-              <th className="px-4 py-3 font-medium">Mahasiswa</th>
-              <th className="px-4 py-3 font-medium">IPK</th>
-              <th className="px-4 py-3 font-medium">Predikat</th>
-              <th className="px-4 py-3 font-medium">No. Yudisium</th>
-              <th className="px-4 py-3 font-medium">Status</th>
-              <th className="px-4 py-3 text-right font-medium">Aksi</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((y) => (
-              <tr key={y.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50">
-                <td className="px-4 py-3">
-                  {y.student?.name ?? '-'}
-                  <div className="text-xs text-slate-400">{y.student?.nim}</div>
-                </td>
-                <td className="px-4 py-3 font-semibold text-primary-600">{y.ipk.toFixed(2)}</td>
-                <td className="px-4 py-3 capitalize">{y.predicate}</td>
-                <td className="px-4 py-3">{y.number || '-'}</td>
-                <td className="px-4 py-3"><Badge value={y.status === 'disahkan' ? 'lulus' : 'diajukan'} /></td>
-                <td className="px-4 py-3">
-                  <div className="flex items-center justify-end gap-1">
-                    {y.status !== 'disahkan' && (
-                      <button onClick={() => { setApprove(y); setForm({ number: '', decree_number: '', date: '', note: '' }); }} className="rounded p-1.5 text-emerald-600 hover:bg-emerald-50" title="Sahkan">
-                        <Check size={15} />
-                      </button>
-                    )}
-                    {y.status === 'disahkan' && (
-                      <button onClick={() => void downloadFile(`/yudisium/${y.id}/pdf`, `yudisium-${y.student?.nim ?? y.id}.pdf`)} className="rounded p-1.5 text-primary-600 hover:bg-primary-50" title="Unduh PDF">
-                        <Download size={15} />
-                      </button>
-                    )}
-                    <button onClick={() => void remove(y)} className="rounded p-1.5 text-red-500 hover:bg-red-50" title="Hapus">
-                      <Trash2 size={15} />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {!loading && items.length === 0 && <EmptyState message="Belum ada data yudisium" />}
-      </div>
-
-      <Pagination page={page} totalPage={totalPage} onChange={setPage} />
+      <DataTable<Yudisium> fetcher={fetcher} columns={columns} rowKey={(y) => y.id} reloadKey={reloadKey} searchable searchPlaceholder="Cari mahasiswa..." emptyText="Belum ada data yudisium" />
 
       <Modal open={proposeOpen} title="Ajukan Yudisium" onClose={() => setProposeOpen(false)}>
         <div className="space-y-3">
-          <p className="text-sm text-slate-500">Syarat otomatis diperiksa: tugas akhir lulus & UKT lunas. IPK & predikat dihitung sistem.</p>
+          <p className="text-sm text-muted-foreground">Syarat otomatis diperiksa: tugas akhir lulus & UKT lunas. IPK & predikat dihitung sistem.</p>
           <Field label="Mahasiswa">
-            <select className={inputClass} value={studentId} onChange={(e) => setStudentId(e.target.value)}>
-              <option value="">— pilih —</option>
-              {students.map((s) => (
-                <option key={s.value} value={s.value}>{s.label}</option>
-              ))}
-            </select>
+            <Combobox options={students} value={studentId} onChange={setStudentId} allowClear placeholder="— pilih —" />
           </Field>
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="secondary" onClick={() => setProposeOpen(false)}>Batal</Button>
@@ -140,7 +132,7 @@ export function YudisiumPage() {
           <Field label="Nomor Yudisium"><input className={inputClass} value={form.number} onChange={(e) => setForm({ ...form, number: e.target.value })} /></Field>
           <Field label="Nomor SK (opsional)"><input className={inputClass} value={form.decree_number} onChange={(e) => setForm({ ...form, decree_number: e.target.value })} /></Field>
           <Field label="Tanggal"><input type="date" className={inputClass} value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} /></Field>
-          <Field label="Catatan (opsional)"><textarea className={inputClass} rows={2} value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} /></Field>
+          <Field label="Catatan (opsional)"><Textarea rows={2} value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} /></Field>
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="secondary" onClick={() => setApprove(null)}>Batal</Button>
             <Button onClick={() => void doApprove()}>Sahkan</Button>
@@ -161,7 +153,9 @@ const categoryOptions = [
 ];
 
 export function SkpiPage() {
-  const { items, page, setPage, totalPage, loading, refresh } = useList<Skpi>('/skpi');
+  const [reloadKey, setReloadKey] = useState(0);
+  const reload = () => setReloadKey((k) => k + 1);
+  const fetcher = useCallback((p: ListParams) => listResource<Skpi>('/skpi', p), []);
   const students = useOptions<Student>('/students', (s) => `${s.nim} — ${s.name}`);
   const [createOpen, setCreateOpen] = useState(false);
   const [form, setForm] = useState({ student_id: '', number: '', issued_date: '' });
@@ -177,7 +171,7 @@ export function SkpiPage() {
       toast.success('SKPI tersimpan');
       setCreateOpen(false);
       setForm({ student_id: '', number: '', issued_date: '' });
-      void refresh();
+      reload();
     } catch (err) {
       toast.error(errorMessage(err));
     }
@@ -187,71 +181,59 @@ export function SkpiPage() {
     if (!confirm('Hapus SKPI ini?')) return;
     try {
       await deleteResource(`/skpi/${sk.id}`);
-      void refresh();
+      reload();
     } catch (err) {
       toast.error(errorMessage(err));
     }
   };
 
+  const columns: Column<Skpi>[] = [
+    {
+      title: 'Mahasiswa',
+      key: 'mhs',
+      render: (_, sk) => (
+        <div>
+          {sk.student?.name ?? '-'}
+          <div className="text-xs text-muted-foreground">{sk.student?.nim}</div>
+        </div>
+      ),
+    },
+    { title: 'No. SKPI', key: 'number', render: (_, sk) => sk.number || '-' },
+    { title: 'Capaian', key: 'capaian', render: (_, sk) => `${sk.activities?.length ?? 0} item` },
+    { title: 'Terbit', key: 'issued', render: (_, sk) => formatDate(sk.issued_date) },
+    {
+      title: 'Aksi',
+      key: 'act',
+      align: 'right',
+      render: (_, sk) => (
+        <div className="flex items-center justify-end gap-1">
+          <Button variant="secondary" onClick={() => setDetail(sk)}>Capaian</Button>
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-primary hover:text-primary" title="Unduh PDF" onClick={() => void downloadFile(`/skpi/${sk.id}/pdf`, `skpi-${sk.student?.nim ?? sk.id}.pdf`)}>
+            <Download className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" title="Hapus" onClick={() => void remove(sk)}>
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+      ),
+    },
+  ];
+
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-xl font-semibold">SKPI (Surat Keterangan Pendamping Ijazah)</h1>
+        <h1 className="text-xl font-bold tracking-tight">SKPI (Surat Keterangan Pendamping Ijazah)</h1>
         <Button onClick={() => setCreateOpen(true)}>
           <span className="flex items-center gap-1"><FilePlus size={16} /> Buat SKPI</span>
         </Button>
       </div>
 
-      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs uppercase text-slate-500">
-              <th className="px-4 py-3 font-medium">Mahasiswa</th>
-              <th className="px-4 py-3 font-medium">No. SKPI</th>
-              <th className="px-4 py-3 font-medium">Capaian</th>
-              <th className="px-4 py-3 font-medium">Terbit</th>
-              <th className="px-4 py-3 text-right font-medium">Aksi</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((sk) => (
-              <tr key={sk.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50">
-                <td className="px-4 py-3">
-                  {sk.student?.name ?? '-'}
-                  <div className="text-xs text-slate-400">{sk.student?.nim}</div>
-                </td>
-                <td className="px-4 py-3">{sk.number || '-'}</td>
-                <td className="px-4 py-3">{sk.activities?.length ?? 0} item</td>
-                <td className="px-4 py-3">{formatDate(sk.issued_date)}</td>
-                <td className="px-4 py-3">
-                  <div className="flex items-center justify-end gap-1">
-                    <Button variant="secondary" onClick={() => setDetail(sk)}>Capaian</Button>
-                    <button onClick={() => void downloadFile(`/skpi/${sk.id}/pdf`, `skpi-${sk.student?.nim ?? sk.id}.pdf`)} className="rounded p-1.5 text-primary-600 hover:bg-primary-50" title="Unduh PDF">
-                      <Download size={15} />
-                    </button>
-                    <button onClick={() => void remove(sk)} className="rounded p-1.5 text-red-500 hover:bg-red-50" title="Hapus">
-                      <Trash2 size={15} />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {!loading && items.length === 0 && <EmptyState message="Belum ada SKPI" />}
-      </div>
-
-      <Pagination page={page} totalPage={totalPage} onChange={setPage} />
+      <DataTable<Skpi> fetcher={fetcher} columns={columns} rowKey={(sk) => sk.id} reloadKey={reloadKey} searchable searchPlaceholder="Cari mahasiswa..." emptyText="Belum ada SKPI" />
 
       <Modal open={createOpen} title="Buat / Perbarui SKPI" onClose={() => setCreateOpen(false)}>
         <div className="space-y-3">
           <Field label="Mahasiswa">
-            <select className={inputClass} value={form.student_id} onChange={(e) => setForm({ ...form, student_id: e.target.value })}>
-              <option value="">— pilih —</option>
-              {students.map((s) => (
-                <option key={s.value} value={s.value}>{s.label}</option>
-              ))}
-            </select>
+            <Combobox options={students} value={form.student_id} onChange={(v) => setForm({ ...form, student_id: v })} allowClear placeholder="— pilih —" />
           </Field>
           <Field label="Nomor SKPI"><input className={inputClass} value={form.number} onChange={(e) => setForm({ ...form, number: e.target.value })} /></Field>
           <Field label="Tanggal Terbit"><input type="date" className={inputClass} value={form.issued_date} onChange={(e) => setForm({ ...form, issued_date: e.target.value })} /></Field>
@@ -304,22 +286,22 @@ function ActivitiesModal({ skpi, onClose }: { skpi: Skpi; onClose: () => void })
     <Modal open title={`Capaian SKPI — ${data.student?.name ?? ''}`} onClose={onClose} wide>
       <div className="space-y-2">
         {(data.activities ?? []).map((a) => (
-          <div key={a.id} className="flex items-start justify-between rounded-lg border border-slate-200 p-2.5">
+          <div key={a.id} className="flex items-start justify-between rounded-lg border border-border p-2.5">
             <div className="text-sm">
               <div className="font-medium">{a.title}</div>
-              <div className="text-xs text-slate-400 capitalize">
+              <div className="text-xs text-muted-foreground capitalize">
                 {a.category}{a.organizer ? ` · ${a.organizer}` : ''}{a.level ? ` · ${a.level}` : ''}{a.year ? ` · ${a.year}` : ''}
               </div>
             </div>
-            <button onClick={() => void remove(a.id)} className="rounded p-1 text-red-500 hover:bg-red-50">
-              <Trash2 size={14} />
-            </button>
+            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => void remove(a.id)}>
+              <Trash2 className="h-4 w-4" />
+            </Button>
           </div>
         ))}
-        {(data.activities ?? []).length === 0 && <div className="py-3 text-center text-sm text-slate-400">Belum ada capaian</div>}
+        {(data.activities ?? []).length === 0 && <div className="py-3 text-center text-sm text-muted-foreground">Belum ada capaian</div>}
       </div>
 
-      <div className="mt-4 rounded-lg border border-slate-200 p-3">
+      <div className="mt-4 rounded-lg border border-border p-3">
         <div className="mb-2 text-sm font-medium">Tambah Capaian</div>
         <div className="grid gap-2 sm:grid-cols-2">
           <Field label="Kategori">

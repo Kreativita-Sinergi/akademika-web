@@ -37,15 +37,15 @@ export default function MyElearningPage() {
 
   return (
     <div>
-      <h1 className="mb-4 text-xl font-semibold">E-Learning</h1>
+      <h1 className="mb-4 text-xl font-bold tracking-tight">E-Learning</h1>
 
-      <div className="mb-4 flex gap-1 rounded-lg border border-slate-200 bg-white p-1 text-sm">
+      <div className="mb-4 flex gap-1 rounded-lg border border-border bg-card p-1 text-sm">
         {(['materi', 'tugas'] as const).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
             className={`flex-1 rounded-md px-3 py-1.5 font-medium capitalize transition ${
-              tab === t ? 'bg-primary-600 text-white' : 'text-slate-600 hover:bg-slate-100'
+              tab === t ? 'bg-primary text-white' : 'text-muted-foreground hover:bg-muted'
             }`}
           >
             {t}
@@ -57,20 +57,20 @@ export default function MyElearningPage() {
         <div className="space-y-3">
           {materials.length === 0 && <EmptyState message="Belum ada materi" />}
           {materials.map((m) => (
-            <div key={m.id} className="rounded-xl border border-slate-200 bg-white p-4">
+            <div key={m.id} className="rounded-xl border border-border bg-card p-4">
               <div className="flex items-center justify-between">
                 <h2 className="flex items-center gap-1.5 font-semibold">
-                  <FileText size={16} className="text-primary-600" /> {m.title}
+                  <FileText size={16} className="text-primary" /> {m.title}
                 </h2>
-                <span className="text-xs text-slate-400">{m.schedule?.course?.name}</span>
+                <span className="text-xs text-muted-foreground">{m.schedule?.course?.name}</span>
               </div>
-              {m.description && <p className="mt-1 text-sm text-slate-600">{m.description}</p>}
+              {m.description && <p className="mt-1 text-sm text-muted-foreground">{m.description}</p>}
               {(m.file_url || m.link_url) && (
                 <a
                   href={m.file_url || m.link_url}
                   target="_blank"
                   rel="noreferrer"
-                  className="mt-2 inline-flex items-center gap-1 text-sm text-primary-600"
+                  className="mt-2 inline-flex items-center gap-1 text-sm text-primary"
                 >
                   <ExternalLink size={14} /> Buka materi
                 </a>
@@ -86,7 +86,7 @@ export default function MyElearningPage() {
           {assignments.map((a) => {
             const sub = subs[a.id];
             return (
-              <div key={a.id} className="rounded-xl border border-slate-200 bg-white p-4">
+              <div key={a.id} className="rounded-xl border border-border bg-card p-4">
                 <div className="flex items-center justify-between gap-2">
                   <h2 className="font-semibold">{a.title}</h2>
                   {sub ? (
@@ -95,12 +95,12 @@ export default function MyElearningPage() {
                     <Badge value="diajukan" />
                   )}
                 </div>
-                <div className="mt-0.5 text-xs text-slate-400">
+                <div className="mt-0.5 text-xs text-muted-foreground">
                   {a.schedule?.course?.name} · Batas: {formatDate(a.due_date)}
                 </div>
-                {a.description && <p className="mt-1 text-sm text-slate-600">{a.description}</p>}
+                {a.description && <p className="mt-1 text-sm text-muted-foreground">{a.description}</p>}
                 {a.file_url && (
-                  <a href={a.file_url} target="_blank" rel="noreferrer" className="mt-1 inline-flex items-center gap-1 text-sm text-primary-600">
+                  <a href={a.file_url} target="_blank" rel="noreferrer" className="mt-1 inline-flex items-center gap-1 text-sm text-primary">
                     <ExternalLink size={13} /> Lampiran soal
                   </a>
                 )}
@@ -112,8 +112,8 @@ export default function MyElearningPage() {
                   </Button>
                   {sub?.score != null && (
                     <span className="text-sm">
-                      Nilai: <span className="font-bold text-primary-600">{sub.score}</span>
-                      {sub.feedback && <span className="text-slate-400"> — {sub.feedback}</span>}
+                      Nilai: <span className="font-bold text-primary">{sub.score}</span>
+                      {sub.feedback && <span className="text-muted-foreground"> — {sub.feedback}</span>}
                     </span>
                   )}
                 </div>
@@ -195,15 +195,15 @@ function SubmitModal({
         <Field label="Unggah File Tugas">
           <input
             type="file"
-            className="block w-full text-sm text-slate-500 file:mr-3 file:rounded-lg file:border-0 file:bg-primary-50 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-primary-700"
+            className="block w-full text-sm text-muted-foreground file:mr-3 file:rounded-lg file:border-0 file:bg-primary/5 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-primary"
             onChange={(e) => {
               const file = e.target.files?.[0];
               if (file) void handleUpload(file);
             }}
           />
-          {uploading && <span className="text-xs text-slate-400">Mengunggah...</span>}
+          {uploading && <span className="text-xs text-muted-foreground">Mengunggah...</span>}
           {fileUrl && !uploading && (
-            <a href={fileUrl} target="_blank" rel="noreferrer" className="mt-1 block truncate text-xs text-primary-600 underline">
+            <a href={fileUrl} target="_blank" rel="noreferrer" className="mt-1 block truncate text-xs text-primary underline">
               File terunggah
             </a>
           )}

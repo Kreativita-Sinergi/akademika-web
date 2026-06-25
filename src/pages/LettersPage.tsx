@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import toast from 'react-hot-toast';
 import { Check, Download, X } from 'lucide-react';
-import { useList } from '../hooks/useList';
-import { patchResource, deleteResource, errorMessage } from '../api/crud';
+import { patchResource, deleteResource, errorMessage, listResource } from '../api/crud';
 import { downloadFile } from '../api/download';
-import { Badge, Button, EmptyState, Field, Modal, Pagination, inputClass, formatDate } from '../components/ui';
+import { Badge, Button, Field, Modal, inputClass, formatDate } from '../components/ui';
+import { DataTable, type Column, type ListParams } from '@/components/ui/data-table';
+import { Textarea } from '@/components/ui/textarea';
 import type { LetterRequest } from '../types';
 
 export const letterTypeLabel: Record<string, string> = {
@@ -16,7 +17,9 @@ export const letterTypeLabel: Record<string, string> = {
 
 // Admin: kelola & proses pengajuan surat akademik mahasiswa.
 export default function LettersPage() {
-  const { items, page, setPage, totalPage, loading, refresh } = useList<LetterRequest>('/letters');
+  const [reloadKey, setReloadKey] = useState(0);
+  const reload = () => setReloadKey((k) => k + 1);
+  const fetcher = useCallback((p: ListParams) => listResource<LetterRequest>('/letters', p), []);
   const [target, setTarget] = useState<LetterRequest | null>(null);
   const [letterNumber, setLetterNumber] = useState('');
   const [note, setNote] = useState('');
@@ -43,7 +46,7 @@ export default function LettersPage() {
       });
       toast.success(status === 'disetujui' ? 'Surat disetujui' : 'Pengajuan ditolak');
       setTarget(null);
-      void refresh();
+      reload();
     } catch (err) {
       toast.error(errorMessage(err));
     } finally {
@@ -56,84 +59,71 @@ export default function LettersPage() {
     try {
       await deleteResource(`/letters/${letter.id}`);
       toast.success('Pengajuan dihapus');
-      void refresh();
+      reload();
     } catch (err) {
       toast.error(errorMessage(err));
     }
   };
 
+  const columns: Column<LetterRequest>[] = [
+    { title: 'Tanggal', key: 'date', render: (_, l) => formatDate(l.created_at) },
+    {
+      title: 'Mahasiswa',
+      key: 'mhs',
+      render: (_, l) => (
+        <div>
+          {l.student?.name ?? '-'}
+          <div className="text-xs text-muted-foreground">{l.student?.nim}</div>
+        </div>
+      ),
+    },
+    { title: 'Jenis Surat', key: 'type', render: (_, l) => letterTypeLabel[l.type] ?? l.type },
+    { title: 'Keperluan', dataIndex: 'purpose' },
+    { title: 'No. Surat', key: 'number', render: (_, l) => l.letter_number || '-' },
+    { title: 'Status', key: 'status', render: (_, l) => <Badge value={l.status} /> },
+    {
+      title: 'Aksi',
+      key: 'act',
+      align: 'right',
+      render: (_, l) => (
+        <div className="flex items-center justify-end gap-1">
+          {l.status === 'diajukan' && (
+            <Button variant="ghost" size="icon" className="h-8 w-8 text-emerald-600 hover:text-emerald-600" title="Proses" onClick={() => openProcess(l)}>
+              <Check className="h-4 w-4" />
+            </Button>
+          )}
+          {l.status === 'disetujui' && (
+            <Button variant="ghost" size="icon" className="h-8 w-8 text-primary hover:text-primary" title="Unduh PDF" onClick={() => void downloadFile(`/letters/${l.id}/pdf`, `surat-${l.student?.nim ?? l.id}.pdf`)}>
+              <Download className="h-4 w-4" />
+            </Button>
+          )}
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" title="Hapus" onClick={() => void remove(l)}>
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      ),
+    },
+  ];
+
   return (
     <div>
-      <h1 className="mb-4 text-xl font-semibold">Surat Akademik</h1>
+      <h1 className="mb-4 text-xl font-bold tracking-tight">Surat Akademik</h1>
 
-      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs uppercase text-slate-500">
-              <th className="px-4 py-3 font-medium">Tanggal</th>
-              <th className="px-4 py-3 font-medium">Mahasiswa</th>
-              <th className="px-4 py-3 font-medium">Jenis Surat</th>
-              <th className="px-4 py-3 font-medium">Keperluan</th>
-              <th className="px-4 py-3 font-medium">No. Surat</th>
-              <th className="px-4 py-3 font-medium">Status</th>
-              <th className="px-4 py-3 text-right font-medium">Aksi</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((l) => (
-              <tr key={l.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50">
-                <td className="px-4 py-3">{formatDate(l.created_at)}</td>
-                <td className="px-4 py-3">
-                  {l.student?.name ?? '-'}
-                  <div className="text-xs text-slate-400">{l.student?.nim}</div>
-                </td>
-                <td className="px-4 py-3">{letterTypeLabel[l.type] ?? l.type}</td>
-                <td className="px-4 py-3">{l.purpose}</td>
-                <td className="px-4 py-3">{l.letter_number || '-'}</td>
-                <td className="px-4 py-3"><Badge value={l.status} /></td>
-                <td className="px-4 py-3">
-                  <div className="flex items-center justify-end gap-1">
-                    {l.status === 'diajukan' && (
-                      <button
-                        onClick={() => openProcess(l)}
-                        className="rounded p-1.5 text-emerald-600 hover:bg-emerald-50"
-                        title="Proses"
-                      >
-                        <Check size={15} />
-                      </button>
-                    )}
-                    {l.status === 'disetujui' && (
-                      <button
-                        onClick={() => void downloadFile(`/letters/${l.id}/pdf`, `surat-${l.student?.nim ?? l.id}.pdf`)}
-                        className="rounded p-1.5 text-primary-600 hover:bg-primary-50"
-                        title="Unduh PDF"
-                      >
-                        <Download size={15} />
-                      </button>
-                    )}
-                    <button
-                      onClick={() => void remove(l)}
-                      className="rounded p-1.5 text-red-500 hover:bg-red-50"
-                      title="Hapus"
-                    >
-                      <X size={15} />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {!loading && items.length === 0 && <EmptyState message="Belum ada pengajuan surat" />}
-      </div>
-
-      <Pagination page={page} totalPage={totalPage} onChange={setPage} />
+      <DataTable<LetterRequest>
+        fetcher={fetcher}
+        columns={columns}
+        rowKey={(l) => l.id}
+        reloadKey={reloadKey}
+        searchable
+        searchPlaceholder="Cari surat..."
+        emptyText="Belum ada pengajuan surat"
+      />
 
       <Modal open={Boolean(target)} title="Proses Pengajuan Surat" onClose={() => setTarget(null)}>
         <div className="space-y-3">
-          <div className="rounded-lg bg-slate-50 p-3 text-sm">
+          <div className="rounded-lg bg-muted p-3 text-sm">
             <div className="font-medium">{target?.student?.name}</div>
-            <div className="text-slate-500">
+            <div className="text-muted-foreground">
               {target && (letterTypeLabel[target.type] ?? target.type)} — {target?.purpose}
             </div>
           </div>
@@ -146,7 +136,7 @@ export default function LettersPage() {
             />
           </Field>
           <Field label="Catatan (opsional / alasan penolakan)">
-            <textarea className={inputClass} rows={2} value={note} onChange={(e) => setNote(e.target.value)} />
+            <Textarea rows={2} value={note} onChange={(e) => setNote(e.target.value)} />
           </Field>
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="danger" disabled={saving} onClick={() => void process('ditolak')}>

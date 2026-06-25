@@ -5,7 +5,18 @@ import ResourcePage from '../components/crud/ResourcePage';
 import { useOptions } from '../hooks/useList';
 import { createResource, errorMessage, getResource } from '../api/crud';
 import { Badge, Button, Field, Modal, inputClass } from '../components/ui';
+import { DataTable, type Column } from '@/components/ui/data-table';
 import type { AcademicYear, ClassGroup, Lecturer, Student, StudentSemester, StudyProgram, UktGroup } from '../types';
+
+const historyColumns: Column<StudentSemester>[] = [
+  { title: 'Smt', dataIndex: 'semester_number', width: 60 },
+  { title: 'Tahun Akademik', key: 'year', render: (_, h) => (h.academic_year ? `${h.academic_year.name} ${h.academic_year.semester}` : '-') },
+  { title: 'SKS Ambil', dataIndex: 'sks_taken' },
+  { title: 'SKS Lulus', dataIndex: 'sks_passed' },
+  { title: 'IPS', key: 'ips', render: (_, h) => h.ips.toFixed(2) },
+  { title: 'IPK', key: 'ipk', render: (_, h) => h.ipk.toFixed(2) },
+  { title: 'Status', key: 'status', render: (_, h) => <Badge value={h.status} /> },
+];
 
 export default function StudentsPage() {
   const programs = useOptions<StudyProgram>('/master/programs', (p) => p.name);
@@ -49,12 +60,12 @@ export default function StudentsPage() {
         title="Mahasiswa"
         endpoint="/students"
         columns={[
-          { key: 'nim', label: 'NIM' },
-          { key: 'name', label: 'Nama' },
+          { key: 'nim', label: 'NIM', sortable: true },
+          { key: 'name', label: 'Nama', sortable: true },
           { key: 'study_program', label: 'Prodi', render: (s) => s.study_program?.name ?? '-' },
           { key: 'class_group', label: 'Rombel', render: (s) => s.class_group?.code ?? '-' },
-          { key: 'entry_year', label: 'Angkatan' },
-          { key: 'current_semester', label: 'Smt' },
+          { key: 'entry_year', label: 'Angkatan', sortable: true },
+          { key: 'current_semester', label: 'Smt', sortable: true },
           { key: 'status', label: 'Status', render: (s) => <Badge value={s.status} /> },
         ]}
         fields={[
@@ -102,13 +113,9 @@ export default function StudentsPage() {
           advisor_lecturer_id: form.advisor_lecturer_id || null,
         })}
         rowActions={(student) => (
-          <button
-            onClick={() => void showHistory(student)}
-            className="rounded p-1.5 text-primary-600 hover:bg-primary-50"
-            title="Riwayat semester"
-          >
-            <History size={15} />
-          </button>
+          <Button variant="ghost" size="icon" className="h-8 w-8" title="Riwayat semester" onClick={() => void showHistory(student)}>
+            <History className="h-4 w-4" />
+          </Button>
         )}
         headerActions={() => (
           <Button variant="secondary" onClick={() => setPromoteOpen(true)}>
@@ -120,38 +127,12 @@ export default function StudentsPage() {
       />
 
       <Modal open={historyOpen} title={`Riwayat Semester — ${historyName}`} onClose={() => setHistoryOpen(false)} wide>
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b text-left text-xs uppercase text-slate-500">
-              <th className="py-2">Smt</th>
-              <th>Tahun Akademik</th>
-              <th>SKS Ambil</th>
-              <th>SKS Lulus</th>
-              <th>IPS</th>
-              <th>IPK</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {history.map((h) => (
-              <tr key={h.id} className="border-b last:border-0">
-                <td className="py-2">{h.semester_number}</td>
-                <td>{h.academic_year ? `${h.academic_year.name} ${h.academic_year.semester}` : '-'}</td>
-                <td>{h.sks_taken}</td>
-                <td>{h.sks_passed}</td>
-                <td>{h.ips.toFixed(2)}</td>
-                <td>{h.ipk.toFixed(2)}</td>
-                <td><Badge value={h.status} /></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {history.length === 0 && <div className="py-6 text-center text-sm text-slate-400">Belum ada riwayat</div>}
+        <DataTable<StudentSemester> columns={historyColumns} rowKey={(h) => h.id} data={history} emptyText="Belum ada riwayat" />
       </Modal>
 
       <Modal open={promoteOpen} title="Naik Semester Massal (Herregistrasi)" onClose={() => setPromoteOpen(false)}>
         <div className="space-y-3">
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-muted-foreground">
             Semua mahasiswa berstatus aktif akan dinaikkan 1 semester dan dicatat pada tahun akademik tujuan.
           </p>
           <Field label="Tahun Akademik Tujuan">

@@ -71,18 +71,18 @@ function AdviseesPanel() {
   }, []);
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4">
+    <div className="rounded-xl border border-border bg-card p-4">
       <h2 className="mb-3 flex items-center gap-2 font-semibold">
-        <Users size={18} className="text-primary-600" /> Mahasiswa Wali Saya ({items.length})
+        <Users size={18} className="text-primary" /> Mahasiswa Wali Saya ({items.length})
       </h2>
       {items.length === 0 ? (
         <EmptyState message="Belum ada mahasiswa wali yang ditugaskan" />
       ) : (
         <div className="flex flex-wrap gap-2">
           {items.map((s) => (
-            <span key={s.id} className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm">
+            <span key={s.id} className="rounded-lg border border-border px-3 py-1.5 text-sm">
               <span className="font-medium">{s.name}</span>{' '}
-              <span className="text-slate-400">{s.nim} · Smt {s.current_semester}</span>
+              <span className="text-muted-foreground">{s.nim} · Smt {s.current_semester}</span>
             </span>
           ))}
         </div>

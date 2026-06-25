@@ -122,7 +122,7 @@ export function InvoicesPage() {
 
       <Modal open={generateOpen} title="Generate Tagihan UKT Massal" onClose={() => setGenerateOpen(false)}>
         <div className="space-y-3">
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-muted-foreground">
             Tagihan dibuat untuk semua mahasiswa aktif yang punya golongan UKT dan belum punya tagihan di tahun akademik terpilih.
           </p>
           <Field label="Tahun Akademik">

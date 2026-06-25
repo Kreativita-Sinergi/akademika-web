@@ -4,7 +4,12 @@ import { ClipboardCheck, Plus, QrCode, Trash2 } from 'lucide-react';
 import api from '../lib/axios';
 import { createResource, deleteResource, errorMessage, getResource, listResource, patchResource } from '../api/crud';
 import { useAuthStore } from '../store/auth';
-import { Badge, Button, EmptyState, Field, Modal, dayNames, formatDate, inputClass } from '../components/ui';
+import { Badge, Button, EmptyState, Field, Modal, dayNames, formatDate } from '../components/ui';
+import { DataTable, type Column } from '@/components/ui/data-table';
+import { Segmented } from '@/components/ui/segmented';
+import { Combobox } from '@/components/ui/combobox';
+import { Textarea } from '@/components/ui/textarea';
+import { cn } from '@/lib/utils';
 import type { ApiResponse, Schedule, Student } from '../types';
 
 interface Session {
@@ -139,131 +144,99 @@ export default function AttendancePage() {
 
   const selected = schedules.find((s) => s.id === scheduleId);
 
+  const sessionColumns: Column<Session>[] = [
+    { title: 'Ke-', key: 'no', className: 'font-medium', dataIndex: 'meeting_number', width: 60 },
+    { title: 'Tanggal', key: 'date', render: (_, s) => formatDate(s.date) },
+    { title: 'Materi / Berita Acara', key: 'topic', render: (_, s) => s.topic },
+    {
+      title: 'Dosen',
+      key: 'lec',
+      render: (_, s) => (
+        <span>
+          <Badge value={s.lecturer_present ? 'lunas' : 'menunggu'} />
+          <span className="ml-1 text-xs capitalize text-muted-foreground">{s.lecturer_status?.replace('_', ' ')}</span>
+        </span>
+      ),
+    },
+    {
+      title: 'Aksi',
+      key: 'act',
+      align: 'right',
+      render: (_, s) => (
+        <div className="flex justify-end gap-1">
+          <Button variant="ghost" size="icon" className={cn('h-8 w-8', s.qr_active ? 'text-emerald-600' : 'text-muted-foreground')} title="Presensi QR mandiri" onClick={() => setQrSession(s)}>
+            <QrCode className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-primary hover:text-primary" title="Isi presensi" onClick={() => void openDetail(s)}>
+            <ClipboardCheck className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" title="Hapus" onClick={() => void removeSession(s)}>
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+      ),
+    },
+  ];
+
+  const recapColumns: Column<RecapRow>[] = [
+    { title: 'NIM', key: 'nim', render: (_, r) => r.student.nim },
+    { title: 'Nama', key: 'name', render: (_, r) => r.student.name },
+    { title: 'Hadir', key: 'present', render: (_, r) => `${r.present}/${r.total_sessions}` },
+    { title: 'Izin', key: 'permit', dataIndex: 'permit' },
+    { title: 'Sakit', key: 'sick', dataIndex: 'sick' },
+    { title: 'Alpa', key: 'absent', dataIndex: 'absent' },
+    {
+      title: 'Kehadiran',
+      key: 'pct',
+      render: (_, r) => (
+        <span className={cn('font-semibold', r.percentage >= 75 ? 'text-emerald-600' : 'text-red-600')}>
+          {r.percentage.toFixed(0)}%
+        </span>
+      ),
+    },
+  ];
+
   return (
     <div>
-      <h1 className="mb-4 text-xl font-semibold">Presensi Kuliah</h1>
+      <h1 className="mb-4 text-xl font-bold tracking-tight">Presensi Kuliah</h1>
 
       <div className="mb-4 max-w-xl">
         <Field label="Pilih Jadwal / Mata Kuliah">
-          <select className={inputClass} value={scheduleId} onChange={(e) => setScheduleId(e.target.value)}>
-            <option value="">— pilih —</option>
-            {schedules.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.course?.name} · {s.class_group?.code} · {dayNames[s.day_of_week]} {s.start_time}
-              </option>
-            ))}
-          </select>
+          <Combobox
+            options={schedules.map((s) => ({
+              value: s.id,
+              label: `${s.course?.name ?? 'MK'} · ${s.class_group?.code ?? ''} · ${dayNames[s.day_of_week]} ${s.start_time}`,
+            }))}
+            value={scheduleId}
+            onChange={setScheduleId}
+            allowClear
+            placeholder="— pilih —"
+          />
         </Field>
       </div>
 
       {scheduleId && (
         <>
-          <div className="mb-4 flex items-center justify-between">
-            <div className="flex gap-1 rounded-lg border border-slate-200 bg-white p-1">
-              {(['sessions', 'recap'] as const).map((v) => (
-                <button
-                  key={v}
-                  onClick={() => setView(v)}
-                  className={`rounded-md px-4 py-1.5 text-sm font-medium ${view === v ? 'bg-primary-600 text-white' : 'text-slate-600 hover:bg-slate-50'}`}
-                >
-                  {v === 'sessions' ? 'Pertemuan' : 'Rekap Kehadiran'}
-                </button>
-              ))}
-            </div>
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <Segmented
+              value={view}
+              onChange={setView}
+              options={[
+                { value: 'sessions', label: 'Pertemuan' },
+                { value: 'recap', label: 'Rekap Kehadiran' },
+              ]}
+            />
             <Button onClick={() => setCreateOpen(true)}>
               <span className="flex items-center gap-1"><Plus size={15} /> Pertemuan Baru</span>
             </Button>
           </div>
 
           {view === 'sessions' && (
-            <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b bg-slate-50 text-left text-xs uppercase text-slate-500">
-                    <th className="px-4 py-3">Ke-</th>
-                    <th className="px-4 py-3">Tanggal</th>
-                    <th className="px-4 py-3">Materi / Berita Acara</th>
-                    <th className="px-4 py-3">Dosen</th>
-                    <th className="px-4 py-3 text-right">Aksi</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {sessions.map((session) => (
-                    <tr key={session.id} className="border-b last:border-0 hover:bg-slate-50">
-                      <td className="px-4 py-3 font-medium">{session.meeting_number}</td>
-                      <td className="px-4 py-3">{formatDate(session.date)}</td>
-                      <td className="px-4 py-3">{session.topic}</td>
-                      <td className="px-4 py-3">
-                        <Badge value={session.lecturer_present ? 'lunas' : 'menunggu'} />
-                        <span className="ml-1 text-xs capitalize text-slate-400">{session.lecturer_status?.replace('_', ' ')}</span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex justify-end gap-1">
-                          <button
-                            onClick={() => { setQrSession(session); }}
-                            className={`rounded p-1.5 hover:bg-slate-100 ${session.qr_active ? 'text-emerald-600' : 'text-slate-500'}`}
-                            title="Presensi QR mandiri"
-                          >
-                            <QrCode size={15} />
-                          </button>
-                          <button
-                            onClick={() => void openDetail(session)}
-                            className="rounded p-1.5 text-primary-600 hover:bg-primary-50"
-                            title="Isi presensi"
-                          >
-                            <ClipboardCheck size={15} />
-                          </button>
-                          <button
-                            onClick={() => void removeSession(session)}
-                            className="rounded p-1.5 text-red-500 hover:bg-red-50"
-                            title="Hapus"
-                          >
-                            <Trash2 size={15} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              {sessions.length === 0 && <EmptyState message="Belum ada pertemuan — klik Pertemuan Baru" />}
-            </div>
+            <DataTable<Session> columns={sessionColumns} rowKey={(s) => s.id} data={sessions} emptyText="Belum ada pertemuan — klik Pertemuan Baru" />
           )}
 
           {view === 'recap' && (
-            <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b bg-slate-50 text-left text-xs uppercase text-slate-500">
-                    <th className="px-4 py-3">NIM</th>
-                    <th className="px-4 py-3">Nama</th>
-                    <th className="px-4 py-3">Hadir</th>
-                    <th className="px-4 py-3">Izin</th>
-                    <th className="px-4 py-3">Sakit</th>
-                    <th className="px-4 py-3">Alpa</th>
-                    <th className="px-4 py-3">Kehadiran</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {recap.map((row) => (
-                    <tr key={row.student.id} className="border-b last:border-0">
-                      <td className="px-4 py-3">{row.student.nim}</td>
-                      <td className="px-4 py-3">{row.student.name}</td>
-                      <td className="px-4 py-3">{row.present}/{row.total_sessions}</td>
-                      <td className="px-4 py-3">{row.permit}</td>
-                      <td className="px-4 py-3">{row.sick}</td>
-                      <td className="px-4 py-3">{row.absent}</td>
-                      <td className="px-4 py-3">
-                        <span className={`font-semibold ${row.percentage >= 75 ? 'text-emerald-600' : 'text-red-600'}`}>
-                          {row.percentage.toFixed(0)}%
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              {recap.length === 0 && <EmptyState message="Belum ada data kehadiran" />}
-            </div>
+            <DataTable<RecapRow> columns={recapColumns} rowKey={(r) => r.student.id} data={recap} emptyText="Belum ada data kehadiran" />
           )}
         </>
       )}
@@ -272,9 +245,9 @@ export default function AttendancePage() {
       <Modal open={createOpen} title={`Pertemuan Baru — ${selected?.course?.name ?? ''}`} onClose={() => setCreateOpen(false)}>
         <div className="space-y-3">
           <Field label="Materi / Berita Acara">
-            <textarea className={inputClass} rows={3} value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="cth: Pengenalan OOP — class, object, method" />
+            <Textarea rows={3} value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="cth: Pengenalan OOP — class, object, method" />
           </Field>
-          <p className="text-xs text-slate-400">Nomor pertemuan & tanggal terisi otomatis (hari ini).</p>
+          <p className="text-xs text-muted-foreground">Nomor pertemuan & tanggal terisi otomatis (hari ini).</p>
           <div className="flex justify-end gap-2">
             <Button variant="secondary" onClick={() => setCreateOpen(false)}>Batal</Button>
             <Button disabled={!topic} onClick={() => void createSession()}>Buat</Button>
@@ -291,25 +264,26 @@ export default function AttendancePage() {
       >
         <div className="max-h-[55vh] space-y-2 overflow-y-auto">
           {detail?.students.map((row) => (
-            <div key={row.student.id} className="flex items-center justify-between rounded-lg border border-slate-100 px-3 py-2">
+            <div key={row.student.id} className="flex items-center justify-between rounded-lg border border-border px-3 py-2">
               <div>
                 <div className="text-sm font-medium">{row.student.name}</div>
-                <div className="text-xs text-slate-400">{row.student.nim}</div>
+                <div className="text-xs text-muted-foreground">{row.student.nim}</div>
               </div>
               <div className="flex gap-1">
                 {statuses.map((status) => (
                   <button
                     key={status}
                     onClick={() => setMarks({ ...marks, [row.student.id]: status })}
-                    className={`rounded-md px-2.5 py-1 text-xs font-medium capitalize transition ${
+                    className={cn(
+                      'rounded-md px-2.5 py-1 text-xs font-medium capitalize transition',
                       marks[row.student.id] === status
                         ? status === 'hadir'
                           ? 'bg-emerald-600 text-white'
                           : status === 'alpa'
                             ? 'bg-red-600 text-white'
                             : 'bg-amber-500 text-white'
-                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                    }`}
+                        : 'bg-muted text-muted-foreground hover:bg-muted/80',
+                    )}
                   >
                     {status}
                   </button>
@@ -335,19 +309,19 @@ export default function AttendancePage() {
           <div className="space-y-4 text-center">
             {qrSession.qr_active ? (
               <>
-                <p className="text-sm text-slate-500">Mahasiswa scan QR ini dari HP untuk presensi mandiri:</p>
+                <p className="text-sm text-muted-foreground">Mahasiswa scan QR ini dari HP untuk presensi mandiri:</p>
                 <img
                   alt="QR Presensi"
-                  className="mx-auto rounded-lg border border-slate-200"
+                  className="mx-auto rounded-lg border border-border"
                   src={`https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(`${window.location.origin}/presensi/${qrSession.qr_token}`)}`}
                 />
-                <p className="break-all text-xs text-slate-400">{window.location.origin}/presensi/{qrSession.qr_token}</p>
+                <p className="break-all text-xs text-muted-foreground">{window.location.origin}/presensi/{qrSession.qr_token}</p>
                 <Button variant="danger" onClick={() => void toggleQr(qrSession, false)}>Tutup Presensi QR</Button>
               </>
             ) : (
               <>
-                <QrCode size={64} className="mx-auto text-slate-300" />
-                <p className="text-sm text-slate-500">Buka sesi presensi mandiri agar mahasiswa bisa scan QR dan mengisi kehadiran sendiri.</p>
+                <QrCode size={64} className="mx-auto text-muted-foreground/40" />
+                <p className="text-sm text-muted-foreground">Buka sesi presensi mandiri agar mahasiswa bisa scan QR dan mengisi kehadiran sendiri.</p>
                 <Button onClick={() => void toggleQr(qrSession, true)}>Buka Presensi QR</Button>
               </>
             )}

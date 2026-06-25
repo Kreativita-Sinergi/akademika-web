@@ -1,43 +1,48 @@
-import { Button as AntButton } from 'antd';
 import type { ReactNode } from 'react';
+import { Button as UIButton } from '@/components/ui/button';
 
-// Atom Button — wrapper Ant Design dengan API kompatibel kode lama
-// (variant: primary/secondary/danger/ghost, type: button/submit).
+// Atom Button — wrapper shadcn dengan API kompatibel kode lama
+// (variant: primary/secondary/danger/ghost/outline; opsional size: sm/icon/lg).
+const variantMap = {
+  primary: 'default',
+  secondary: 'secondary',
+  danger: 'destructive',
+  ghost: 'ghost',
+  outline: 'outline',
+} as const;
+
 export function Button({
   children,
   onClick,
   type = 'button',
   variant = 'primary',
+  size,
   disabled,
   className = '',
   block,
+  title,
 }: {
   children: ReactNode;
   onClick?: () => void;
   type?: 'button' | 'submit';
-  variant?: 'primary' | 'secondary' | 'danger' | 'ghost';
+  variant?: 'primary' | 'secondary' | 'danger' | 'ghost' | 'outline';
+  size?: 'default' | 'sm' | 'lg' | 'icon';
   disabled?: boolean;
   className?: string;
   block?: boolean;
+  title?: string;
 }) {
-  const map: Record<string, { type?: 'primary' | 'default' | 'text'; danger?: boolean }> = {
-    primary: { type: 'primary' },
-    secondary: { type: 'default' },
-    danger: { type: 'primary', danger: true },
-    ghost: { type: 'text' },
-  };
-  const cfg = map[variant];
   return (
-    <AntButton
-      type={cfg.type}
-      danger={cfg.danger}
-      htmlType={type}
+    <UIButton
+      type={type}
+      variant={variantMap[variant]}
+      size={size}
       disabled={disabled}
-      block={block}
-      className={className}
       onClick={onClick}
+      title={title}
+      className={block ? `w-full ${className}` : className}
     >
       {children}
-    </AntButton>
+    </UIButton>
   );
 }
