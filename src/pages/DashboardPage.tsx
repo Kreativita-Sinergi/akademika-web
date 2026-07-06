@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Loader2, Users, Contact, BookOpen, CalendarDays, UserCheck, FileText, Banknote, UserPlus, ScrollText, Megaphone, ClipboardCheck, ChevronRight } from 'lucide-react';
+import { Users, Contact, BookOpen, CalendarDays, UserCheck, FileText, Banknote, UserPlus, ScrollText, Megaphone, ClipboardCheck, ChevronRight } from 'lucide-react';
 import { getResource } from '../api/crud';
 import { Badge } from '../components/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Loading } from '../components/atoms/Loading';
 import OnboardingChecklist from '../components/organisms/OnboardingChecklist';
 import type { DashboardSummary } from '../types';
 import type { ReactNode } from 'react';
@@ -42,7 +43,7 @@ export default function DashboardPage() {
   if (!data) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary/70" />
+        <Loading size="lg" />
       </div>
     );
   }

@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { Check, ChevronsUpDown, X, Plus, Loader2 } from 'lucide-react'
+import { Check, ChevronsUpDown, X, Plus } from 'lucide-react'
 import { Button } from './button'
 import { Popover, PopoverContent, PopoverTrigger } from './popover'
 import { Command, CommandEmpty, CommandInput, CommandItem, CommandList } from './command'
+import { Loading } from '../atoms/Loading'
 import { cn } from '@/lib/utils'
 
 export interface ComboOption {
@@ -118,7 +119,7 @@ export function Combobox({
             ))}
             {showCreate && (
               <CommandItem value={`__create__${trimmed}`} onSelect={handleCreate} className="text-primary">
-                {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+                {creating ? <Loading size="sm" /> : <Plus className="h-4 w-4" />}
                 Tambah "{trimmed}"
               </CommandItem>
             )}

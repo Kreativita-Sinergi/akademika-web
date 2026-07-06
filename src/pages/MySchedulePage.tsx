@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Loader2, MapPin, Clock } from 'lucide-react';
+import { MapPin, Clock } from 'lucide-react';
 import { getResource } from '../api/crud';
 import { dayNames } from '../components/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { EmptyState } from '../components/atoms';
+import { EmptyState, Loading } from '../components/atoms';
 import { useAuthStore } from '../store/auth';
 import type { Schedule } from '../types';
 
@@ -41,7 +41,7 @@ export default function MySchedulePage() {
 
       {loading && (
         <div className="flex justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-primary/70" />
+          <Loading size="lg" />
         </div>
       )}
       {!loading && schedules.length === 0 && <EmptyState message="Belum ada jadwal pada tahun akademik aktif" />}

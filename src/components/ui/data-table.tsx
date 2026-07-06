@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { Loader2, Inbox, Search, ChevronUp, ChevronDown, ChevronsUpDown, Download, AlertCircle, RefreshCw } from 'lucide-react';
+import { Search, ChevronUp, ChevronDown, ChevronsUpDown, Download, AlertCircle, RefreshCw } from 'lucide-react';
 import {
   Table,
   TableHeader,
@@ -16,6 +16,8 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from './dropdown-menu';
+import { Loading } from '../atoms/Loading';
+import { EmptyState } from '../atoms/EmptyState';
 import { cn } from '@/lib/utils';
 import type { ApiResponse } from '@/types';
 
@@ -247,7 +249,7 @@ function ServerTable<T>({
             <div className="flex flex-wrap items-center gap-2 [&>button]:flex-1 sm:[&>button]:flex-none">
               {exportable && (
                 <Button variant="outline" size="sm" disabled={exporting} onClick={() => void exportCsv()}>
-                  {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                  {exporting ? <Loading size="sm" /> : <Download className="h-4 w-4" />}
                   <span className="hidden sm:inline">Ekspor</span>
                 </Button>
               )}
@@ -390,25 +392,17 @@ function TableShell<T>({ columns, rowKey, rows, loading, error, onRetry, emptyTe
               </TableCell>
             </TableRow>
           ) : loading ? (
-            // Skeleton: beberapa baris berkedip agar tak terasa "kosong" saat memuat.
-            Array.from({ length: 5 }).map((_, ri) => (
-              <TableRow key={`sk-${ri}`} className="hover:bg-transparent">
-                {columns.map((col, ci) => (
-                  <TableCell key={ci} className={alignClass[col.align ?? 'left']}>
-                    <div className="h-4 w-full max-w-[10rem] animate-pulse rounded bg-muted" />
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))
+            <TableRow className="hover:bg-transparent">
+              <TableCell colSpan={columns.length} className="h-44 text-center">
+                <div className="flex justify-center">
+                  <Loading size="lg" />
+                </div>
+              </TableCell>
+            </TableRow>
           ) : rows.length === 0 ? (
             <TableRow className="hover:bg-transparent">
               <TableCell colSpan={columns.length} className="h-44 text-center">
-                <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-                    <Inbox className="h-6 w-6 opacity-60" />
-                  </div>
-                  <span className="text-sm">{emptyText}</span>
-                </div>
+                <EmptyState message={emptyText} />
               </TableCell>
             </TableRow>
           ) : (

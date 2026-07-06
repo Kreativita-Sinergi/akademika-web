@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Download, Loader2 } from 'lucide-react';
+import { Download } from 'lucide-react';
 import { getResource } from '../api/crud';
 import { downloadFile } from '../api/download';
 import { Badge, Button, formatRupiah } from '../components/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Loading } from '../components/atoms/Loading';
 
 interface Kv {
   key: string;
@@ -93,7 +94,7 @@ export default function ReportsPage() {
   if (!data) {
     return (
       <div className="flex justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-primary/70" />
+        <Loading size="lg" />
       </div>
     );
   }

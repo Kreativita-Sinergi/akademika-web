@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { CheckCircle2, Loader2, MapPin, XCircle } from 'lucide-react';
+import { CheckCircle2, MapPin, XCircle } from 'lucide-react';
 import { createResource, errorMessage } from '../api/crud';
 import { Button } from '../components/ui';
+import { Loading } from '../components/atoms/Loading';
 
 type Phase = 'idle' | 'locating' | 'submitting' | 'success' | 'error';
 
@@ -49,7 +50,7 @@ export default function SelfCheckinPage() {
     <div className="mx-auto flex min-h-[60vh] max-w-md flex-col items-center justify-center text-center">
       {(phase === 'locating' || phase === 'submitting') && (
         <>
-          <Loader2 size={48} className="animate-spin text-primary-500" />
+          <Loading size="lg" />
           <p className="mt-4 text-muted-foreground">
             {phase === 'locating' ? 'Mengambil lokasi Anda…' : 'Mengirim presensi…'}
           </p>

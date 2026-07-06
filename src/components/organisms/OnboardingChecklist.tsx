@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CheckCircle2, Circle, ArrowRight, Loader2, Sparkles } from 'lucide-react';
+import { CheckCircle2, Circle, ArrowRight, Sparkles } from 'lucide-react';
 import { listResource } from '../../api/crud';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Loading } from '../atoms/Loading';
 import { cn } from '@/lib/utils';
 import type { AcademicYear } from '../../types';
 
@@ -61,7 +62,7 @@ export default function OnboardingChecklist() {
     return (
       <Card>
         <CardContent className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" /> Memeriksa kelengkapan setup…
+          <Loading size="sm" /> Memeriksa kelengkapan setup…
         </CardContent>
       </Card>
     );
