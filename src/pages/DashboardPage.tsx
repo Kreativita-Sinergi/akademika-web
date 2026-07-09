@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, Contact, BookOpen, CalendarDays, UserCheck, FileText, Banknote, UserPlus, ScrollText, Megaphone, ClipboardCheck, ChevronRight } from 'lucide-react';
-import { getResource } from '../api/crud';
+import { Users, Contact, BookOpen, CalendarDays, UserCheck, FileText, Banknote, UserPlus, ScrollText, Megaphone, ClipboardCheck, ChevronRight, RefreshCw } from 'lucide-react';
+import { getResource, errorMessage } from '../api/crud';
 import { Badge } from '../components/ui';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loading } from '../components/atoms/Loading';
 import OnboardingChecklist from '../components/organisms/OnboardingChecklist';
@@ -34,11 +35,29 @@ function StatCard({ label, value, icon, color }: { label: string; value: number;
 
 export default function DashboardPage() {
   const [data, setData] = useState<DashboardSummary | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    void getResource<DashboardSummary>('/dashboard').then(setData);
-  }, []);
+  const load = () => {
+    setError(null);
+    setData(null);
+    getResource<DashboardSummary>('/dashboard')
+      .then(setData)
+      .catch((err) => setError(errorMessage(err)));
+  };
+
+  useEffect(load, []);
+
+  if (error) {
+    return (
+      <div className="flex min-h-[50vh] flex-col items-center justify-center gap-3 text-center">
+        <p className="text-sm text-muted-foreground">{error}</p>
+        <Button variant="outline" onClick={load}>
+          <RefreshCw className="h-4 w-4" /> Coba lagi
+        </Button>
+      </div>
+    );
+  }
 
   if (!data) {
     return (

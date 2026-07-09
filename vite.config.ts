@@ -10,6 +10,9 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         '@': fileURLToPath(new URL('./src', import.meta.url)),
+        // lottie-react menaruh bundle UMD di field "browser" sehingga default
+        // import-nya menjadi objek modul, bukan komponen — paksa pakai build ES.
+        'lottie-react': 'lottie-react/build/index.es.js',
       },
     },
     server: {

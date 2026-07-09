@@ -11,6 +11,23 @@ export interface ApiResponse<T> {
   };
 }
 
+// Tenant kampus — hanya dikelola super admin platform.
+export interface Campus {
+  id: string;
+  code: string;
+  name: string;
+  address: string;
+  city: string;
+  province: string;
+  phone: string;
+  email: string;
+  website: string;
+  logo_url: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Faculty {
   id: string;
   code: string;

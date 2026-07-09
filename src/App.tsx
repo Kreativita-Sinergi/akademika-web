@@ -4,6 +4,7 @@ import { useAuthStore } from './store/auth';
 import Layout from './components/layout/Layout';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
+import SuperAdminDashboardPage from './pages/SuperAdminDashboardPage';
 import {
   AcademicYearsPage,
   ClassGroupsPage,
@@ -55,6 +56,13 @@ function RequireAuth() {
   return <Outlet />;
 }
 
+// Beranda menyesuaikan role: super admin melihat daftar tenant kampus.
+function HomeByRole() {
+  const role = useAuthStore((s) => s.user?.role);
+  if (role === 'SUPER_ADMIN') return <SuperAdminDashboardPage />;
+  return <DashboardPage />;
+}
+
 export default function App() {
   return (
     <BrowserRouter>
@@ -67,7 +75,7 @@ export default function App() {
         <Route path="/ujian" element={<ExamPage />} />
         <Route element={<RequireAuth />}>
           <Route element={<Layout />}>
-            <Route path="/" element={<DashboardPage />} />
+            <Route path="/" element={<HomeByRole />} />
             {/* Master */}
             <Route path="/master/faculties" element={<FacultiesPage />} />
             <Route path="/master/programs" element={<ProgramsPage />} />

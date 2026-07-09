@@ -5,11 +5,15 @@ import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import api from '../../lib/axios';
+import { useAuthStore } from '../../store/auth';
 import { formatDate } from '../../utils/format';
 import type { ApiResponse, AppNotification } from '../../types';
 
 // Lonceng notifikasi in-app: agregasi status surat/beasiswa/tiket/cuti/kegiatan.
+// Notifikasi ber-scope kampus, jadi disembunyikan untuk SUPER_ADMIN (tanpa campus_id).
 export default function NotificationBell() {
+  const role = useAuthStore((s) => s.user?.role);
+  const isSuperAdmin = role === 'SUPER_ADMIN';
   const [items, setItems] = useState<AppNotification[]>([]);
   const [unread, setUnread] = useState(0);
   const [open, setOpen] = useState(false);
@@ -26,10 +30,11 @@ export default function NotificationBell() {
   };
 
   useEffect(() => {
+    if (isSuperAdmin) return;
     load();
     const t = setInterval(load, 60000); // poll tiap 1 menit
     return () => clearInterval(t);
-  }, []);
+  }, [isSuperAdmin]);
 
   const markAllRead = async () => {
     await api.patch('/notifications/read-all');
@@ -46,6 +51,8 @@ export default function NotificationBell() {
     setOpen(false);
     if (n.link) navigate(n.link);
   };
+
+  if (isSuperAdmin) return null;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>

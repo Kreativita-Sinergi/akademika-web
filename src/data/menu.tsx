@@ -242,7 +242,16 @@ export const studentMenu: MenuSection[] = [
   },
 ];
 
+// Menu super admin platform: hanya pengelolaan tenant kampus.
+export const superAdminMenu: MenuSection[] = [
+  {
+    section: 'Platform',
+    items: [{ to: '/', label: 'Kampus (Tenant)', icon: <Building2 size={17} /> }],
+  },
+];
+
 export function menuForRole(role?: string): MenuSection[] {
+  if (role === 'SUPER_ADMIN') return superAdminMenu;
   if (role === 'CAMPUS_ADMIN') return adminMenu;
   if (role === 'LECTURER') return lecturerMenu;
   return studentMenu;
