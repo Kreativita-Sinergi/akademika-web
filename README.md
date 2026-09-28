@@ -27,4 +27,10 @@ cp .env.example .env   # arahkan VITE_API_BASE_URL ke akademika-service
 npm install
 npm run dev
 ```
+
+## Deployment
+
+Project Vercel: [akademika-web](https://vercel.com/kreativita/akademika-web). Branch `main` terhubung ke GitHub dan otomatis membangun web dengan `npm ci` serta `npm run build`. URL produksi: https://akademika-web.vercel.app.
+
+API produksi diatur melalui `.env.production` ke `https://api.lokatech.id/akademika/api/v1`. Untuk pengembangan lokal, gunakan `.env` seperti contoh di atas.
 # akademika-web
