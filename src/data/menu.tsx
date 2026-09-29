@@ -262,6 +262,10 @@ export function menuForRole(role?: string): MenuSection[] {
     { to: '/school/teachers', label: 'Guru', icon: <Contact size={17} /> },
     { to: '/school/pupils', label: 'Siswa', icon: <Users size={17} /> },
     { to: '/school/grades', label: 'Nilai', icon: <ScrollText size={17} /> },
+    { to: '/school/attendance', label: 'Presensi', icon: <ClipboardList size={17} /> },
+    { to: '/school/report-card', label: 'Rapor', icon: <FileText size={17} /> },
+    { to: '/school/applicants', label: 'Pendaftar Baru', icon: <UserSquare2 size={17} /> },
+    { to: '/school/invoices', label: 'Tagihan Sekolah', icon: <Banknote size={17} /> },
   ] }];
   if (role === 'TEACHER') return [{ section: 'Mengajar', items: [
     { to: '/', label: 'Dashboard', icon: <Home size={17} /> },
@@ -269,12 +273,16 @@ export function menuForRole(role?: string): MenuSection[] {
     { to: '/school/subjects', label: 'Mata Pelajaran', icon: <BookOpen size={17} /> },
     { to: '/school/pupils', label: 'Siswa', icon: <Users size={17} /> },
     { to: '/school/grades', label: 'Nilai', icon: <ScrollText size={17} /> },
+    { to: '/school/attendance', label: 'Presensi', icon: <ClipboardList size={17} /> },
   ] }];
   if (role === 'PUPIL') return [{ section: 'Belajar', items: [
     { to: '/', label: 'Dashboard', icon: <Home size={17} /> },
     { to: '/school/classes', label: 'Kelas', icon: <School size={17} /> },
     { to: '/school/subjects', label: 'Mata Pelajaran', icon: <BookOpen size={17} /> },
     { to: '/school/grades', label: 'Nilai Saya', icon: <ScrollText size={17} /> },
+    { to: '/school/attendance', label: 'Presensi Saya', icon: <ClipboardList size={17} /> },
+    { to: '/school/report-card', label: 'Rapor Saya', icon: <FileText size={17} /> },
+    { to: '/school/invoices', label: 'Tagihan Saya', icon: <Banknote size={17} /> },
   ] }];
   if (role === 'CAMPUS_ADMIN') return adminMenu;
   if (role === 'LECTURER') return lecturerMenu;

@@ -49,6 +49,7 @@ import SelfCheckinPage from './pages/SelfCheckinPage';
 import LecturerRealizationPage from './pages/LecturerRealizationPage';
 import AttendanceSettingsPage from './pages/AttendanceSettingsPage';
 import SchoolRegisterPage from './pages/SchoolRegisterPage';
+import SchoolApplyPage from './pages/SchoolApplyPage';
 import SchoolPage from './pages/SchoolPage';
 import { MyBkdPage, BkdReviewPage } from './pages/BkdPage';
 
@@ -78,6 +79,7 @@ export default function App() {
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/sekolah/daftar" element={<SchoolRegisterPage />} />
+        <Route path="/sekolah/:code/ppdb" element={<SchoolApplyPage />} />
         {/* Halaman publik PMB — tanpa login */}
         <Route path="/daftar/:campusCode" element={<PublicRegisterPage />} />
         <Route path="/status/:campusCode" element={<StatusCheckPage />} />
