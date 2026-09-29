@@ -46,6 +46,7 @@ export const roleLabel: Record<string, string> = {
 	SCHOOL_ADMIN: 'Admin Sekolah',
 	TEACHER: 'Guru',
 	PUPIL: 'Siswa',
+	SCHOOL_APPLICANT: 'Calon Siswa',
   CAMPUS_ADMIN: 'Administrator',
   LECTURER: 'Dosen',
   STUDENT: 'Mahasiswa',
@@ -255,6 +256,7 @@ export const superAdminMenu: MenuSection[] = [
 
 export function menuForRole(role?: string): MenuSection[] {
   if (role === 'SUPER_ADMIN') return superAdminMenu;
+  if (role === 'SCHOOL_APPLICANT') return [{ section: 'Pendaftaran', items: [{ to: '/', label: 'Status & Ujian', icon: <ClipboardList size={17} /> }] }];
   if (role === 'SCHOOL_ADMIN') return [{ section: 'Sekolah', items: [
     { to: '/', label: 'Dashboard', icon: <Home size={17} /> },
     { to: '/school/classes', label: 'Kelas', icon: <School size={17} /> },
@@ -265,6 +267,7 @@ export function menuForRole(role?: string): MenuSection[] {
     { to: '/school/attendance', label: 'Presensi', icon: <ClipboardList size={17} /> },
     { to: '/school/report-card', label: 'Rapor', icon: <FileText size={17} /> },
     { to: '/school/applicants', label: 'Pendaftar Baru', icon: <UserSquare2 size={17} /> },
+    { to: '/school/exam', label: 'Ujian Masuk', icon: <ClipboardCheck size={17} /> },
     { to: '/school/invoices', label: 'Tagihan Sekolah', icon: <Banknote size={17} /> },
   ] }];
   if (role === 'TEACHER') return [{ section: 'Mengajar', items: [

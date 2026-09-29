@@ -50,6 +50,7 @@ import LecturerRealizationPage from './pages/LecturerRealizationPage';
 import AttendanceSettingsPage from './pages/AttendanceSettingsPage';
 import SchoolRegisterPage from './pages/SchoolRegisterPage';
 import SchoolApplyPage from './pages/SchoolApplyPage';
+import SchoolApplicantPage from './pages/SchoolApplicantPage';
 import SchoolPage from './pages/SchoolPage';
 import { MyBkdPage, BkdReviewPage } from './pages/BkdPage';
 
@@ -59,8 +60,9 @@ function RequireAuth() {
   const path = window.location.pathname;
   if (!token) return <Navigate to="/login" replace />;
   const schoolRole = role === 'SCHOOL_ADMIN' || role === 'TEACHER' || role === 'PUPIL';
-  if (schoolRole && path !== '/' && !path.startsWith('/school/')) return <Navigate to="/" replace />;
-  if (!schoolRole && path.startsWith('/school/')) return <Navigate to="/" replace />;
+  if (role === 'SCHOOL_APPLICANT' && path !== '/' && path !== '/school/admissions') return <Navigate to="/" replace />;
+  if (schoolRole && (path === '/school/admissions' || (path !== '/' && !path.startsWith('/school/')))) return <Navigate to="/" replace />;
+  if (!schoolRole && role !== 'SCHOOL_APPLICANT' && path.startsWith('/school/')) return <Navigate to="/" replace />;
   return <Outlet />;
 }
 
@@ -69,6 +71,7 @@ function HomeByRole() {
   const role = useAuthStore((s) => s.user?.role);
   if (role === 'SUPER_ADMIN') return <SuperAdminDashboardPage />;
   if (role === 'SCHOOL_ADMIN' || role === 'TEACHER' || role === 'PUPIL') return <SchoolPage section="dashboard" />;
+  if (role === 'SCHOOL_APPLICANT') return <SchoolApplicantPage />;
   return <DashboardPage />;
 }
 
@@ -88,6 +91,7 @@ export default function App() {
           <Route element={<Layout />}>
             <Route path="/" element={<HomeByRole />} />
             <Route path="/school/:section" element={<SchoolPage />} />
+            <Route path="/school/admissions" element={<SchoolApplicantPage />} />
             {/* Master */}
             <Route path="/master/faculties" element={<FacultiesPage />} />
             <Route path="/master/programs" element={<ProgramsPage />} />
