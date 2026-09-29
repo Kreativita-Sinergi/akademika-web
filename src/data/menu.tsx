@@ -43,6 +43,9 @@ export interface MenuSection {
 }
 
 export const roleLabel: Record<string, string> = {
+	SCHOOL_ADMIN: 'Admin Sekolah',
+	TEACHER: 'Guru',
+	PUPIL: 'Siswa',
   CAMPUS_ADMIN: 'Administrator',
   LECTURER: 'Dosen',
   STUDENT: 'Mahasiswa',
@@ -246,12 +249,33 @@ export const studentMenu: MenuSection[] = [
 export const superAdminMenu: MenuSection[] = [
   {
     section: 'Platform',
-    items: [{ to: '/', label: 'Kampus (Tenant)', icon: <Building2 size={17} /> }],
+    items: [{ to: '/', label: 'Institusi (Tenant)', icon: <Building2 size={17} /> }],
   },
 ];
 
 export function menuForRole(role?: string): MenuSection[] {
   if (role === 'SUPER_ADMIN') return superAdminMenu;
+  if (role === 'SCHOOL_ADMIN') return [{ section: 'Sekolah', items: [
+    { to: '/', label: 'Dashboard', icon: <Home size={17} /> },
+    { to: '/school/classes', label: 'Kelas', icon: <School size={17} /> },
+    { to: '/school/subjects', label: 'Mata Pelajaran', icon: <BookOpen size={17} /> },
+    { to: '/school/teachers', label: 'Guru', icon: <Contact size={17} /> },
+    { to: '/school/pupils', label: 'Siswa', icon: <Users size={17} /> },
+    { to: '/school/grades', label: 'Nilai', icon: <ScrollText size={17} /> },
+  ] }];
+  if (role === 'TEACHER') return [{ section: 'Mengajar', items: [
+    { to: '/', label: 'Dashboard', icon: <Home size={17} /> },
+    { to: '/school/classes', label: 'Kelas', icon: <School size={17} /> },
+    { to: '/school/subjects', label: 'Mata Pelajaran', icon: <BookOpen size={17} /> },
+    { to: '/school/pupils', label: 'Siswa', icon: <Users size={17} /> },
+    { to: '/school/grades', label: 'Nilai', icon: <ScrollText size={17} /> },
+  ] }];
+  if (role === 'PUPIL') return [{ section: 'Belajar', items: [
+    { to: '/', label: 'Dashboard', icon: <Home size={17} /> },
+    { to: '/school/classes', label: 'Kelas', icon: <School size={17} /> },
+    { to: '/school/subjects', label: 'Mata Pelajaran', icon: <BookOpen size={17} /> },
+    { to: '/school/grades', label: 'Nilai Saya', icon: <ScrollText size={17} /> },
+  ] }];
   if (role === 'CAMPUS_ADMIN') return adminMenu;
   if (role === 'LECTURER') return lecturerMenu;
   return studentMenu;

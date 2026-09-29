@@ -5,6 +5,7 @@ import { GraduationCap, Mail, Lock, Eye, EyeOff, Users, CalendarDays, ScrollText
 import api from '../lib/axios';
 import { errorMessage } from '../api/crud';
 import { useAuthStore } from '../store/auth';
+import type { Role } from '../store/auth';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -17,7 +18,7 @@ interface LoginData {
   campus_id: string | null;
   name: string;
   email: string;
-  role: 'SUPER_ADMIN' | 'CAMPUS_ADMIN' | 'LECTURER' | 'STUDENT';
+  role: Role;
   ref_id: string | null;
 }
 
@@ -76,14 +77,13 @@ export default function LoginPage() {
         <div className="relative z-10 space-y-8">
           <div>
             <p className="mb-3 text-sm font-semibold uppercase tracking-widest text-white/70">
-              Sistem Informasi Akademik Kampus
+              Sistem Informasi Akademik
             </p>
             <h1 className="text-4xl xl:text-5xl font-extrabold leading-tight text-white">
-              Kelola Akademik Kampus Lebih Terpusat
+              Kelola Akademik Sekolah dan Kampus
             </h1>
             <p className="mt-4 max-w-md text-lg leading-relaxed text-white/80">
-              Satu platform untuk mengelola mahasiswa, dosen, jadwal, hingga nilai —
-              terintegrasi dari PMB sampai kelulusan.
+              Satu platform untuk SD, SMP, SMA, SMK, dan perguruan tinggi.
             </p>
           </div>
 
@@ -112,7 +112,7 @@ export default function LoginPage() {
             <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-gradient text-white shadow-md shadow-primary/30">
               <GraduationCap size={24} />
             </div>
-            <p className="text-sm text-muted-foreground">Sistem Informasi Akademik Kampus</p>
+            <p className="text-sm text-muted-foreground">Sistem Informasi Akademik</p>
           </div>
 
           <Card className="shadow-sm">
@@ -131,7 +131,7 @@ export default function LoginPage() {
                       type="email"
                       required
                       className="h-11 pl-9"
-                      placeholder="email@kampus.ac.id"
+                      placeholder="email@sekolah.sch.id"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                     />
@@ -165,6 +165,7 @@ export default function LoginPage() {
                   {loading ? 'Memproses...' : 'Masuk'}
                 </Button>
               </form>
+              <p className="mt-5 text-center text-sm text-muted-foreground">Belum punya akun sekolah? <a className="font-semibold text-primary" href="/sekolah/daftar">Daftarkan sekolah</a></p>
             </CardContent>
           </Card>
         </div>

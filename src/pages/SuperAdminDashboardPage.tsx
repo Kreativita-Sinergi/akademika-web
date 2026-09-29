@@ -47,7 +47,7 @@ export default function SuperAdminDashboardPage() {
 
   return (
     <div className="space-y-5">
-      <h1 className="text-xl font-bold tracking-tight">Kampus (Tenant)</h1>
+      <h1 className="text-xl font-bold tracking-tight">Institusi (Tenant)</h1>
 
       <div className="grid grid-cols-2 gap-4 sm:max-w-md">
         <Card>
@@ -56,7 +56,7 @@ export default function SuperAdminDashboardPage() {
               <Building2 className="h-6 w-6 text-blue-600" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Total Kampus</p>
+              <p className="text-sm text-muted-foreground">Total Institusi</p>
               <p className="text-2xl font-bold tracking-tight">{campuses.length.toLocaleString('id-ID')}</p>
             </div>
           </CardContent>
@@ -67,7 +67,7 @@ export default function SuperAdminDashboardPage() {
               <Building2 className="h-6 w-6 text-emerald-600" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Kampus Aktif</p>
+              <p className="text-sm text-muted-foreground">Institusi Aktif</p>
               <p className="text-2xl font-bold tracking-tight">{active.toLocaleString('id-ID')}</p>
             </div>
           </CardContent>
@@ -76,17 +76,18 @@ export default function SuperAdminDashboardPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Daftar Kampus</CardTitle>
+          <CardTitle className="text-base">Daftar Institusi</CardTitle>
         </CardHeader>
         <CardContent>
           {campuses.length === 0 ? (
-            <EmptyState message="Belum ada kampus terdaftar" />
+            <EmptyState message="Belum ada institusi terdaftar" />
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Kode</TableHead>
                   <TableHead>Nama</TableHead>
+                  <TableHead>Jenjang</TableHead>
                   <TableHead>Kota</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Status</TableHead>
@@ -98,6 +99,7 @@ export default function SuperAdminDashboardPage() {
                   <TableRow key={c.id}>
                     <TableCell className="font-medium">{c.code}</TableCell>
                     <TableCell>{c.name}</TableCell>
+                    <TableCell>{c.education_level || 'UNIVERSITY'}</TableCell>
                     <TableCell>{c.city || '-'}</TableCell>
                     <TableCell>{c.email || '-'}</TableCell>
                     <TableCell>

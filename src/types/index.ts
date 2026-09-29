@@ -13,6 +13,7 @@ export interface ApiResponse<T> {
 
 // Tenant kampus — hanya dikelola super admin platform.
 export interface Campus {
+	 education_level: 'UNIVERSITY' | 'SD' | 'SMP' | 'SMA' | 'SMK';
   id: string;
   code: string;
   name: string;

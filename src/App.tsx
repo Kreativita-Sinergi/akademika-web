@@ -48,11 +48,18 @@ import { TicketsPage, MyTicketsPage } from './pages/TicketPage';
 import SelfCheckinPage from './pages/SelfCheckinPage';
 import LecturerRealizationPage from './pages/LecturerRealizationPage';
 import AttendanceSettingsPage from './pages/AttendanceSettingsPage';
+import SchoolRegisterPage from './pages/SchoolRegisterPage';
+import SchoolPage from './pages/SchoolPage';
 import { MyBkdPage, BkdReviewPage } from './pages/BkdPage';
 
 function RequireAuth() {
   const token = useAuthStore((s) => s.token);
+  const role = useAuthStore((s) => s.user?.role);
+  const path = window.location.pathname;
   if (!token) return <Navigate to="/login" replace />;
+  const schoolRole = role === 'SCHOOL_ADMIN' || role === 'TEACHER' || role === 'PUPIL';
+  if (schoolRole && path !== '/' && !path.startsWith('/school/')) return <Navigate to="/" replace />;
+  if (!schoolRole && path.startsWith('/school/')) return <Navigate to="/" replace />;
   return <Outlet />;
 }
 
@@ -60,6 +67,7 @@ function RequireAuth() {
 function HomeByRole() {
   const role = useAuthStore((s) => s.user?.role);
   if (role === 'SUPER_ADMIN') return <SuperAdminDashboardPage />;
+  if (role === 'SCHOOL_ADMIN' || role === 'TEACHER' || role === 'PUPIL') return <SchoolPage section="dashboard" />;
   return <DashboardPage />;
 }
 
@@ -69,6 +77,7 @@ export default function App() {
       <Toaster position="top-right" />
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/sekolah/daftar" element={<SchoolRegisterPage />} />
         {/* Halaman publik PMB — tanpa login */}
         <Route path="/daftar/:campusCode" element={<PublicRegisterPage />} />
         <Route path="/status/:campusCode" element={<StatusCheckPage />} />
@@ -76,6 +85,7 @@ export default function App() {
         <Route element={<RequireAuth />}>
           <Route element={<Layout />}>
             <Route path="/" element={<HomeByRole />} />
+            <Route path="/school/:section" element={<SchoolPage />} />
             {/* Master */}
             <Route path="/master/faculties" element={<FacultiesPage />} />
             <Route path="/master/programs" element={<ProgramsPage />} />
