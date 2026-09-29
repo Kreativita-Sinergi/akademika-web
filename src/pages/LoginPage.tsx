@@ -23,9 +23,9 @@ interface LoginData {
 }
 
 const features = [
-  { icon: Users, text: 'Kelola data mahasiswa & dosen terpusat' },
-  { icon: CalendarDays, text: 'Susun jadwal kuliah otomatis' },
-  { icon: ScrollText, text: 'Pantau nilai & KRS real-time' },
+  { icon: Users, text: 'Kelola data siswa, guru, mahasiswa, dan dosen' },
+  { icon: CalendarDays, text: 'Atur kelas, mata pelajaran, dan kegiatan akademik' },
+  { icon: ScrollText, text: 'Pantau nilai, presensi, dan rapor' },
 ];
 
 export default function LoginPage() {
